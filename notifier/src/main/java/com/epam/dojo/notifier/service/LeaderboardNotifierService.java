@@ -63,7 +63,7 @@ public class LeaderboardNotifierService {
                 .mapToObj(i -> leaderboard.get(i).getEmail())
                 .collect(Collectors.toList());
         emails.forEach(e -> notificationServices.forEach(service ->
-                        service.notify(e, new LeaderboardNotification("Change of leaderboard!"))));
+                        service.notify(e, new LeaderboardNotification())));
     }
 
     @PostConstruct

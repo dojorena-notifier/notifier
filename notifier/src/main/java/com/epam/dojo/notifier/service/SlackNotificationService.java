@@ -30,7 +30,7 @@ public class SlackNotificationService implements NotificationService {
             LOGGER.warn("Error occurred while trying to send Slack notification to user with email {}.", email);
             return;
         }
-        LOGGER.info("Notification \"{}\" send to user with email {}.", notification.getMessage(), email);
+        LOGGER.info("Slack notification send to user with email {}.", email);
     }
 
     private String getConversationId(String email) {
