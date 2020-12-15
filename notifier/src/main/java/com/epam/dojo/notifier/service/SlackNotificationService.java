@@ -27,19 +27,23 @@ public class SlackNotificationService implements NotificationService {
 
 
     public void notify(String email, String message) {
-        slackClient.postMessage(ChatPostMessageParams.builder()
-                .setChannelId(getConversationId(email))
-                .setText(message)
-                .addAttachments(Attachment.builder()
-                        .addActions(Action.builder()
-                                .setType(ActionType.BUTTON)
-                                .setText(BUTTON_TEXT)
-                                .setRawStyle(BUTTON_STYLE)
-//                                .setUrl(BUTTON_REDIRECT_URL)
-                                .build())
-                        .build())
-                .build());
-
+        try {
+            slackClient.postMessage(ChatPostMessageParams.builder()
+                    .setChannelId(getConversationId(email))
+                    .setText(message)
+                    .addAttachments(Attachment.builder()
+                            .addActions(Action.builder()
+                                    .setType(ActionType.BUTTON)
+                                    .setText(BUTTON_TEXT)
+                                    .setRawStyle(BUTTON_STYLE)
+    //                                .setUrl(BUTTON_REDIRECT_URL)
+                                    .build())
+                            .build())
+                    .build());
+        } catch (IllegalStateException e) {
+            LOGGER.warn("Slack user with email {} not found.", email);
+            return;
+        }
         LOGGER.info("Notification \"{}\" send to user with email {}.", message, email);
     }
 
@@ -58,5 +62,4 @@ public class SlackNotificationService implements NotificationService {
 
         return conversationsOpenResponse.getConversation().getId();
     }
-
 }
