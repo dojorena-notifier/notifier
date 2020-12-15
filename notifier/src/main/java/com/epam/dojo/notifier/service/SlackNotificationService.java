@@ -18,6 +18,9 @@ import org.springframework.stereotype.Service;
 public class SlackNotificationService implements NotificationService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SlackNotificationService.class);
+    public static final String BUTTON_TEXT = "View Leaderboard";
+    public static final String BUTTON_STYLE = "primary";
+    public static final String BUTTON_REDIRECT_URL = "";
 
     @Autowired
     private SlackClient slackClient;
@@ -30,9 +33,9 @@ public class SlackNotificationService implements NotificationService {
                 .addAttachments(Attachment.builder()
                         .addActions(Action.builder()
                                 .setType(ActionType.BUTTON)
-                                .setText("View Leaderboard")
-                                .setRawStyle("primary")
-                                .setUrl("http://localhost:8080/notify/success")
+                                .setText(BUTTON_TEXT)
+                                .setRawStyle(BUTTON_STYLE)
+//                                .setUrl(BUTTON_REDIRECT_URL)
                                 .build())
                         .build())
                 .build());
