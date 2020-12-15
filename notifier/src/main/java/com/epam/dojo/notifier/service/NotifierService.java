@@ -1,6 +1,5 @@
-package com.epam.dojo.notifier.services;
+package com.epam.dojo.notifier.service;
 
-import com.epam.dojo.notifier.Notifier;
 import com.epam.dojo.notifier.configuration.Configuration;
 import com.epam.dojo.notifier.model.User;
 import org.slf4j.Logger;
@@ -30,14 +29,14 @@ public class NotifierService {
     private final List<User> leaderboard;
 
     private final ScheduledExecutorService executorService;
-    private final Notifier notifier;
+    private final NotificationService notificationService;
 
     @Autowired
-    public NotifierService(Configuration configuration, Notifier notifier) {
+    public NotifierService(Configuration configuration, NotificationService notificationService) {
         this.leaderboard = new ArrayList<>();
         this.configuration = configuration;
         this.restTemplate = new RestTemplate();
-        this.notifier = notifier;
+        this.notificationService = notificationService;
         this.executorService = Executors.newScheduledThreadPool(configuration.getThreadPoolSize());
     }
 
@@ -62,7 +61,7 @@ public class NotifierService {
                 .filter(i -> !leaderboard.get(i).equals(newLeaderboard.get(i)))
                 .mapToObj(i -> leaderboard.get(i).getEmail())
                 .collect(Collectors.toList());
-        emails.forEach(e -> notifier.notify(e, "Change of leaderboard!"));
+        emails.forEach(e -> notificationService.notify(e, "Change of leaderboard!"));
     }
 
     @PostConstruct

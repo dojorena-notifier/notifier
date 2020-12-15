@@ -1,4 +1,4 @@
-package com.epam.dojo.notifier.config;
+package com.epam.dojo.notifier.configuration;
 
 import com.hubspot.slack.client.SlackClient;
 import com.hubspot.slack.client.SlackClientFactory;
