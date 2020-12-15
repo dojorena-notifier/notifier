@@ -1,6 +1,7 @@
 package com.epam.dojo.notifier.service;
 
 import com.epam.dojo.notifier.configuration.Configuration;
+import com.epam.dojo.notifier.model.LeaderboardNotification;
 import com.epam.dojo.notifier.model.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,21 +23,21 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 @Service
-public class NotifierService {
-    private static final Logger LOGGER = LoggerFactory.getLogger(NotifierService.class);
+public class LeaderboardNotifierService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(LeaderboardNotifierService.class);
     private final Configuration configuration;
     private final RestTemplate restTemplate;
     private final List<User> leaderboard;
 
     private final ScheduledExecutorService executorService;
-    private final NotificationService notificationService;
+    private final List<NotificationService> notificationServices;
 
     @Autowired
-    public NotifierService(Configuration configuration, NotificationService notificationService) {
+    public LeaderboardNotifierService(Configuration configuration, List<NotificationService> notificationServices) {
         this.leaderboard = new ArrayList<>();
         this.configuration = configuration;
         this.restTemplate = new RestTemplate();
-        this.notificationService = notificationService;
+        this.notificationServices = notificationServices;
         this.executorService = Executors.newScheduledThreadPool(configuration.getThreadPoolSize());
     }
 
@@ -61,7 +62,8 @@ public class NotifierService {
                 .filter(i -> !leaderboard.get(i).equals(newLeaderboard.get(i)))
                 .mapToObj(i -> leaderboard.get(i).getEmail())
                 .collect(Collectors.toList());
-        emails.forEach(e -> notificationService.notify(e, "Change of leaderboard!"));
+        emails.forEach(e -> notificationServices.forEach(service ->
+                        service.notify(e, new LeaderboardNotification())));
     }
 
     @PostConstruct
