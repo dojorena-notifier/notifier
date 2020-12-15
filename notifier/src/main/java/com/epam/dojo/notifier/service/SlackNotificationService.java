@@ -18,25 +18,32 @@ import org.springframework.stereotype.Service;
 public class SlackNotificationService implements NotificationService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SlackNotificationService.class);
+    public static final String BUTTON_TEXT = "View Leaderboard";
+    public static final String BUTTON_STYLE = "primary";
+    public static final String BUTTON_REDIRECT_URL = "";
 
     @Autowired
     private SlackClient slackClient;
 
 
     public void notify(String email, String message) {
-        slackClient.postMessage(ChatPostMessageParams.builder()
-                .setChannelId(getConversationId(email))
-                .setText(message)
-                .addAttachments(Attachment.builder()
-                        .addActions(Action.builder()
-                                .setType(ActionType.BUTTON)
-                                .setText("View Leaderboard")
-                                .setRawStyle("primary")
-                                .setUrl("http://localhost:8080/notify/success")
-                                .build())
-                        .build())
-                .build());
-
+        try {
+            slackClient.postMessage(ChatPostMessageParams.builder()
+                    .setChannelId(getConversationId(email))
+                    .setText(message)
+                    .addAttachments(Attachment.builder()
+                            .addActions(Action.builder()
+                                    .setType(ActionType.BUTTON)
+                                    .setText(BUTTON_TEXT)
+                                    .setRawStyle(BUTTON_STYLE)
+    //                                .setUrl(BUTTON_REDIRECT_URL)
+                                    .build())
+                            .build())
+                    .build());
+        } catch (IllegalStateException e) {
+            LOGGER.warn("Slack user with email {} not found.", email);
+            return;
+        }
         LOGGER.info("Notification \"{}\" send to user with email {}.", message, email);
     }
 
@@ -55,5 +62,4 @@ public class SlackNotificationService implements NotificationService {
 
         return conversationsOpenResponse.getConversation().getId();
     }
-
 }
