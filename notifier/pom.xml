@@ -39,6 +39,12 @@
 			<version>1.18.16</version>
 			<scope>provided</scope>
 		</dependency>
+
+		<dependency>
+			<groupId>com.hubspot.slack</groupId>
+			<artifactId>slack-java-client</artifactId>
+			<version>1.12</version>
+		</dependency>
 	</dependencies>
 
 	<build>
