@@ -1,0 +1,54 @@
+<!DOCTYPE HTML>
+<html xmlns:th="https://www.thymeleaf.org">
+<head>
+    <title>Game Notifications</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+</head>
+<body>
+
+<p>Notifications for Gojo Games</p>
+<div>
+    <form action="#" th:action="@{/contest}" th:object="${newContest}" method="post">
+        <table>
+            <tr>
+                <td>Game:</td>
+                <td>
+                    <select th:field="*{contestId}">
+                        <option th:each="game : ${games}"
+                                th:value="${game.id}"
+                                th:utext="${game.title}"/>
+                    </select>
+                </td>
+            </tr>
+
+            <tr>
+                <td><label for="slackToken">Slack token:</label></td>
+                <td><input id="slackToken" required th:field="*{slackToken}"></td>
+            </tr>
+
+            <tr>
+                <td><label for="slackChannel">Slack channel:</label></td>
+                <td><input id="slackChannel" required th:field="*{slackChannel}"></td>
+            </tr>
+
+            <tr>
+                <td colspan="2">
+                    <input type="submit" value="Start Notifications">
+                </td>
+            </tr>
+        </table>
+
+    </form>
+</div>
+
+<div>
+    <p>Listening for events</p>
+    <table>
+        <tr th:each="contest : ${contests}">
+            <td th:text="${contest.contestId}" />
+            <td th:text="${contest.title}" />
+        </tr>
+    </table>
+</div>
+</body>
+</html>
