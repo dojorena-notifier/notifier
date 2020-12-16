@@ -57,6 +57,12 @@ public class GamesService {
     }
 
     public void addContest(Contest contest) {
+        // TODO: start the notifications
         contestRepo.put(contest.getContestId(), contest);
+    }
+
+    public void stopContestById(String contestId) {
+        // TODO: really stop the notifications for that contest
+        contestRepo.remove(contestId);
     }
 }
