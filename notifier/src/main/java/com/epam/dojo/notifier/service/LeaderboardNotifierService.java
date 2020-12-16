@@ -1,8 +1,7 @@
 package com.epam.dojo.notifier.service;
 
 import com.epam.dojo.notifier.configuration.Configuration;
-import com.epam.dojo.notifier.model.LeaderboardNotification;
-import com.epam.dojo.notifier.model.User;
+import com.epam.dojo.notifier.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +15,8 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -31,13 +32,15 @@ public class LeaderboardNotifierService {
 
     private final ScheduledExecutorService executorService;
     private final List<NotificationService> notificationServices;
+    private final SlackNotificationService slackNotificationService;
 
     @Autowired
-    public LeaderboardNotifierService(Configuration configuration, List<NotificationService> notificationServices) {
+    public LeaderboardNotifierService(Configuration configuration, List<NotificationService> notificationServices, SlackNotificationService slackNotificationService) {
         this.leaderboard = new ArrayList<>();
         this.configuration = configuration;
         this.restTemplate = new RestTemplate();
         this.notificationServices = notificationServices;
+        this.slackNotificationService = slackNotificationService;
         this.executorService = Executors.newScheduledThreadPool(configuration.getThreadPoolSize());
     }
 
@@ -49,10 +52,31 @@ public class LeaderboardNotifierService {
 
         if (response != null && !leaderboard.equals(response)) {
             LOGGER.info("There are changes in leaderboard!");
-            notifyChanges(response);
+
+            // notifyChanges(response);
+
+            // TODO: determine the type of the change - is it just a participant score change
+            //  or the participant changed the position in the leaderboard
+            EventType currentEventType = EventType.ANY_LEADERBOARD_CHANGE;
+            for (Map.Entry<EventType, Set<NotifierType>> notifiersConfig : configuration.getNotifiers().entrySet()) {
+                if (currentEventType == notifiersConfig.getKey()) {
+                    for (NotifierType notifierType : notifiersConfig.getValue()) {
+                        notificationServiceFactory(notifiersConfig.getKey(), notifierType)
+                                .notify(new LeaderBoard(response));
+                    }
+                }
+            }
+
             leaderboard.clear();
             leaderboard.addAll(response);
         }
+    }
+
+    private NotificationService<LeaderBoard> notificationServiceFactory(EventType eventType, NotifierType notifierType) {
+        if (eventType == EventType.ANY_LEADERBOARD_CHANGE && notifierType == NotifierType.SLACK) {
+            return slackNotificationService;
+        }
+        return null;
     }
 
     private void notifyChanges(List<User> newLeaderboard) {
