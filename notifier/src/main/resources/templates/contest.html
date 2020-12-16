@@ -42,10 +42,10 @@
             <div class="col" th:text="${contest.contestId}"></div>
             <div class="col" th:text="${contest.title}"></div>
             <div class="col">
-                <a data-toggle="tooltip" title="Edit" th:href="@{/contest/open/{id}(id=${contest.contestId})}">
+                <a title="Edit" th:href="@{/contest/open/{id}(id=${contest.contestId})}">
                     <i class="fa fa-edit"></i>
                 </a>
-                <a title="Stop notifications" data-toggle="modal" data-target="#confirm">
+                <a href="#" title="Stop notifications" data-toggle="modal" data-target="#confirm">
                     <i class="fa fa-trash"></i>
                 </a>
             </div>
