@@ -16,11 +16,21 @@
         <form action="#" th:action="@{/contest}" th:object="${newContest}" method="post">
             <div class="form-group">
                 <label for="contestId">Game:</label>
-                <select class="form-control" id="contestId" th:field="*{contestId}" th:disabled="*{contestId}">
-                    <option th:each="game : ${games}"
-                            th:value="${game.id}"
-                            th:utext="${game.title}"></option>
-                </select>
+                <th:block th:if="*{contestId}">
+                    <select class="form-control" id="contestId" th:field="*{contestId}" disabled>
+                        <option th:each="game : ${games}"
+                                th:value="${game.id}"
+                                th:utext="${game.title}"></option>
+                    </select>
+                    <input type="hidden" th:field="*{contestId}">
+                </th:block>
+                <th:block th:unless="*{contestId}">
+                    <select class="form-control" id="contestId" th:field="*{contestId}">
+                        <option th:each="game : ${games}"
+                                th:value="${game.id}"
+                                th:utext="${game.title}"></option>
+                    </select>
+                </th:block>
             </div>
             <div class="form-group">
                 <label for="slackToken">Slack token:</label>
