@@ -13,13 +13,11 @@ import org.springframework.web.client.RestTemplate;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -31,16 +29,16 @@ public class LeaderboardNotifierService {
     private final List<User> leaderboard;
 
     private final ScheduledExecutorService executorService;
-    private final List<NotificationService> notificationServices;
-    private final SlackNotificationService slackNotificationService;
+    private final Map<NotifierType, NotificationService> notificationServices;
 
     @Autowired
-    public LeaderboardNotifierService(Configuration configuration, List<NotificationService> notificationServices, SlackNotificationService slackNotificationService) {
+    public LeaderboardNotifierService(Configuration configuration, Collection<NotificationService> notificationServices) {
+
         this.leaderboard = new ArrayList<>();
         this.configuration = configuration;
         this.restTemplate = new RestTemplate();
-        this.notificationServices = notificationServices;
-        this.slackNotificationService = slackNotificationService;
+        this.notificationServices = notificationServices.stream()
+                .collect(Collectors.toMap(NotificationService::getNotificationServiceTypeMapping, Function.identity()));
         this.executorService = Executors.newScheduledThreadPool(configuration.getThreadPoolSize());
     }
 
@@ -53,18 +51,13 @@ public class LeaderboardNotifierService {
         if (response != null && !leaderboard.equals(response)) {
             LOGGER.info("There are changes in leaderboard!");
 
-            // notifyChanges(response);
+            notifyUsersForChangedPosition(response);
 
             // TODO: determine the type of the change - is it just a participant score change
             //  or the participant changed the position in the leaderboard
             EventType currentEventType = EventType.ANY_LEADERBOARD_CHANGE;
-            for (Map.Entry<EventType, Set<NotifierType>> notifiersConfig : configuration.getNotifiers().entrySet()) {
-                if (currentEventType == notifiersConfig.getKey()) {
-                    for (NotifierType notifierType : notifiersConfig.getValue()) {
-                        notificationServiceFactory(notifiersConfig.getKey(), notifierType)
-                                .notify(new LeaderBoard(response));
-                    }
-                }
+            for (NotifierType notifierType : configuration.getNotifiers().get(currentEventType)) {
+                notificationServices.get(notifierType).notify(new FullLeaderboardNotification(response));
             }
 
             leaderboard.clear();
@@ -72,22 +65,18 @@ public class LeaderboardNotifierService {
         }
     }
 
-    private NotificationService<LeaderBoard> notificationServiceFactory(EventType eventType, NotifierType notifierType) {
-        if (eventType == EventType.ANY_LEADERBOARD_CHANGE && notifierType == NotifierType.SLACK) {
-            return slackNotificationService;
-        }
-        return null;
-    }
-
-    private void notifyChanges(List<User> newLeaderboard) {
+    private void notifyUsersForChangedPosition(List<User> newLeaderboard) {
         int size = Math.min(newLeaderboard.size(), leaderboard.size());
 
         List<String> emails = IntStream.range(0, size)
                 .filter(i -> !leaderboard.get(i).equals(newLeaderboard.get(i)))
                 .mapToObj(i -> leaderboard.get(i).getEmail())
                 .collect(Collectors.toList());
-        emails.forEach(e -> notificationServices.forEach(service ->
-                        service.notify(e, new LeaderboardNotification())));
+        emails.forEach(email -> {
+            for (NotifierType notifierType : configuration.getNotifiers().get(EventType.PARTICIPANT_SCORE_CHANGE)) {
+                notificationServices.get(notifierType).notify(email, new PersonalLeaderboardNotification(newLeaderboard, email));
+            }
+        });
     }
 
     @PostConstruct
