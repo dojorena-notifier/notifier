@@ -10,14 +10,8 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserInfo {
-    private String picture;
-    private List<String> technologies;
-    private String email;
-    private String name;
     private long id;
-    private String city;
-    private String company;
-    private String country;
-    private String position;
-    private boolean isInternal;
+    private String name;
+    private String picture;
+    private String email;
 }
