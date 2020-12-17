@@ -51,6 +51,12 @@ public class WebUIController {
         return setupContestsPage(model, new Contest());
     }
 
+    @GetMapping("/games/refresh")
+    public String gamesRefresh(Model model) {
+        gamesService.invalidateGamesCache();
+        return contestsPage(model);
+    }
+
     private String setupContestsPage(Model model, Contest contest) {
         model.addAttribute("newContest", contest);
         model.addAttribute("games", gamesService.getAllGames());
