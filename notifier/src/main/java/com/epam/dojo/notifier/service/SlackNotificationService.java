@@ -66,11 +66,11 @@ public class SlackNotificationService implements NotificationService<LeaderBoard
     // post to channel
 
     @Override
-    public void notify(LeaderBoard newLeaderBoard) {
+    public void notify(LeaderBoard newLeaderBoard, String slackChannel) {
 
         // post header
         postMessagePart(ChatPostMessageParams.builder()
-                .setChannelId(channelToPostIn)
+                .setChannelId(slackChannel)
                 .setBlocks(Arrays.asList(
                         Divider.builder().build(),
                         Section.of(Text.of(TextType.MARKDOWN, "*Leader board update*"))
@@ -84,7 +84,7 @@ public class SlackNotificationService implements NotificationService<LeaderBoard
         int i = 1;
         for (User user : newLeaderBoard.getUsers()) {
             postMessagePart(ChatPostMessageParams.builder()
-                    .setChannelId(channelToPostIn)
+                    .setChannelId(slackChannel)
                     .setBlocks(Collections.singletonList(
                             Section.builder().setText(Text.of(TextType.PLAIN_TEXT, " "/*String.valueOf(i++)*/)).addFields(
                                     Text.of(TextType.MARKDOWN, user.getUser().getName()),
@@ -95,7 +95,7 @@ public class SlackNotificationService implements NotificationService<LeaderBoard
 
         // post footer
         postMessagePart(ChatPostMessageParams.builder()
-                .setChannelId(channelToPostIn)
+                .setChannelId(slackChannel)
                 .setBlocks(Collections.singletonList(Divider.builder().build()))
                 .build());
     }

@@ -23,12 +23,14 @@ public class GamesService {
     private String gamesApi;
 
     private final RestTemplate restTemplate;
+    private final NotificationManagingService notificationManagingService;
 
     private Map<String, Game> gameRepo;
     private final Map<String, Contest> contestRepo = new HashMap<>();
 
     @Autowired
-    public GamesService() {
+    public GamesService(final NotificationManagingService notificationManagingService) {
+        this.notificationManagingService = notificationManagingService;
         this.restTemplate = new RestTemplate();
     }
 
@@ -57,12 +59,12 @@ public class GamesService {
     }
 
     public void addContest(Contest contest) {
-        // TODO: start the notifications
+        notificationManagingService.startNotifications(contest);
         contestRepo.put(contest.getContestId(), contest);
     }
 
     public void stopContestById(String contestId) {
-        // TODO: really stop the notifications for that contest
+        notificationManagingService.stopNotifications(contestId);
         contestRepo.remove(contestId);
     }
 }
