@@ -88,12 +88,7 @@ public class LeaderboardNotifierService {
 
     @PostConstruct
     private void init() {
-        // TODO: remove this after contest feature is implemented
-        Map<EventType, Set<NotifierType>> map = new HashMap<>();
-        Set<NotifierType> set = new HashSet<>();
-        set.add(NotifierType.SLACK);
-        map.put(EventType.ANY_LEADERBOARD_CHANGE, set);
-        Contest contest = new Contest("152", map);
+        Contest contest = new Contest();
 
         executorService.scheduleAtFixedRate(() -> getLeaderBoard(contest), 0, configuration.getPeriod(), TimeUnit.SECONDS);
     }
