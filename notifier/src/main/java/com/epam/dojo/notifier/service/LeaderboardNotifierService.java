@@ -24,6 +24,7 @@ public class LeaderboardNotifierService {
     private final Configuration configuration;
     private final RestTemplate restTemplate;
     private final List<User> leaderboard;
+    private final Map<Long, String> emails = new HashMap<>();
 
     private final ScheduledExecutorService executorService;
     private final List<NotificationService> notificationServices;
@@ -50,14 +51,14 @@ public class LeaderboardNotifierService {
         if (response != null && !leaderboard.equals(response)) {
             LOGGER.info("There are changes in leaderboard!");
 
-            response.stream().filter(user -> !leaderboard.contains(user))
+            response.stream().filter(user -> !emails.containsKey(user.getUser().getId()))
                     .forEach(user -> {
                         ResponseEntity<UserDetails> userDetailsResponse = restTemplate.exchange(configuration.getUserDetailsApi() + user.getUser().getId(),
                                 HttpMethod.GET, null, new ParameterizedTypeReference<UserDetails>() {
                                 });
                         UserDetails userDetails = userDetailsResponse.getBody();
                         if (userDetails != null) {
-                            user.setEmail(userDetails.getEmail());
+                            emails.put(user.getUser().getId(), userDetails.getEmail());
                         }
                     });
 

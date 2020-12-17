@@ -3,17 +3,25 @@ package com.epam.dojo.notifier.model;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Objects;
+
 @Data
 @NoArgsConstructor
 public class User {
     private UserInfo user;
     private long score;
 
-    public String getEmail() {
-        return user.getEmail();
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof User)) return false;
+        User user1 = (User) o;
+        return score == user1.score &&
+                user.equals(user1.user);
     }
 
-    public void setEmail(String email) {
-        this.user.setEmail(email);
+    @Override
+    public int hashCode() {
+        return Objects.hash(user, score);
     }
 }
