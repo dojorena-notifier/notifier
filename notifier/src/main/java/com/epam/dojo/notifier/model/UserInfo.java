@@ -4,20 +4,27 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
+import java.util.Objects;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserInfo {
-    private String picture;
-    private List<String> technologies;
-    private String email;
-    private String name;
     private long id;
-    private String city;
-    private String company;
-    private String country;
-    private String position;
-    private boolean isInternal;
+    private String name;
+    private String picture;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof UserInfo)) return false;
+        UserInfo userInfo = (UserInfo) o;
+        return id == userInfo.id &&
+                name.equals(userInfo.name);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, name);
+    }
 }

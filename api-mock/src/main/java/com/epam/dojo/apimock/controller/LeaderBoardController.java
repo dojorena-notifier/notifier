@@ -3,6 +3,7 @@ package com.epam.dojo.apimock.controller;
 import com.epam.dojo.apimock.LeaderBoardProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -21,8 +22,18 @@ public class LeaderBoardController {
     }
 
     @GetMapping("/api/v1/codenjoy/leaderboard")
-    public List<Object> getLeaderBoard(){
+    public List<Object> getLeaderBoard() {
         return leaderBoardProvider.generateLeaderBoard(requestId.getAndIncrement());
+    }
+
+    @GetMapping("/api/v1/games")
+    public Object getGames() {
+        return leaderBoardProvider.getGames();
+    }
+
+    @GetMapping("/api/v1/users/{id}")
+    public Object getUserDetails(@PathVariable String id) {
+        return leaderBoardProvider.getUserDetails(id);
     }
 
 }

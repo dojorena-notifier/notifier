@@ -9,6 +9,7 @@ public interface NotificationService {
 
     //Private message
     void notify(String email, Notification notification);
+
     //Message in channel
-    void notify(Notification notification);
+    void notify(Notification notification, String slackChannel);
 }

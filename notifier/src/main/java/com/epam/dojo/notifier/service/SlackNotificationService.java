@@ -46,10 +46,10 @@ public class SlackNotificationService implements NotificationService {
 
     // Notify channel
     @Override
-    public void notify(Notification notification) {
+    public void notify(Notification notification, String slackChannel) {
         postMessagePart(notification
                 .convertToSlackNotification(this::getSlackUserId)
-                .setChannelId(channelToPostIn)
+                .setChannelId(slackChannel)
                 .build());
 
     }

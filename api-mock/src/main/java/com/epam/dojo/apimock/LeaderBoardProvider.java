@@ -11,19 +11,29 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 @Component
 public class LeaderBoardProvider {
 
     @Value("classpath:static/leaderboard-responses.json")
     private Resource resourceFile;
-    private  List<List<Object>> scenarios;
+    @Value("classpath:static/games-response.json")
+    private Resource gamesResponse;
+    @Value("classpath:static/users-responses.json")
+    private Resource usersResponse;
+
+    private List<List<Object>> scenarios;
+    private Object games;
+    private Map<String, Object> users;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(LeaderBoardProvider.class);
 
     @PostConstruct
     private void load() throws IOException {
         this.scenarios = new ObjectMapper().readValue(resourceFile.getFile(), new TypeReference<List<List<Object>>>(){});
+        this.games = new ObjectMapper().readValue(gamesResponse.getFile(), new TypeReference<Object>(){});
+        this.users = new ObjectMapper().readValue(usersResponse.getFile(), new TypeReference<Map<String, Object>>(){});
     }
 
     public List<Object> generateLeaderBoard(final int requestId){
@@ -33,4 +43,11 @@ public class LeaderBoardProvider {
         return scenario;
     }
 
+    public Object getGames() {
+        return games;
+    }
+
+    public Object getUserDetails(String id) {
+        return users.get(id);
+    }
 }

@@ -5,12 +5,19 @@ import com.epam.dojo.notifier.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.*;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.*;
@@ -26,30 +33,44 @@ public class LeaderboardNotifierService {
     private static final Logger LOGGER = LoggerFactory.getLogger(LeaderboardNotifierService.class);
     private final Configuration configuration;
     private final RestTemplate restTemplate;
-    private final List<User> leaderboard;
-
-    private final ScheduledExecutorService executorService;
+    private final Map<String, List<User>> leaderboards;
+    private final Map<Long, String> emails = new HashMap<>();
     private final Map<NotifierType, NotificationService> notificationServices;
+
+    @Value("${leaderboardApi}")
+    private StringBuilder leaderboardApi;
+
 
     @Autowired
     public LeaderboardNotifierService(Configuration configuration, Collection<NotificationService> notificationServices) {
-
-        this.leaderboard = new ArrayList<>();
         this.configuration = configuration;
         this.restTemplate = new RestTemplate();
         this.notificationServices = notificationServices.stream()
                 .collect(Collectors.toMap(NotificationService::getNotificationServiceTypeMapping, Function.identity()));
-        this.executorService = Executors.newScheduledThreadPool(configuration.getThreadPoolSize());
+        this.leaderboards = new ConcurrentHashMap<>();
     }
 
-    public void getLeaderBoard() {
-        ResponseEntity<List<User>> responseEntity = restTemplate.exchange(configuration.getLeaderboardApi(),
+    public void getLeaderBoard(final Contest contest) {
+        StringBuilder getLeaderboardApiBuilder = leaderboardApi.append(contest.getContestId());
+        ResponseEntity<List<User>> responseEntity = restTemplate.exchange(getLeaderboardApiBuilder.toString(),
                 HttpMethod.GET, null, new ParameterizedTypeReference<List<User>>() {
                 });
+
         List<User> response = responseEntity.getBody();
 
-        if (response != null && !leaderboard.equals(response)) {
+        if (response != null && !response.equals(leaderboards.get(contest.getContestId())) ) {
             LOGGER.info("There are changes in leaderboard!");
+
+            response.stream().filter(user -> !emails.containsKey(user.getUser().getId()))
+                    .forEach(user -> {
+                        ResponseEntity<UserDetails> userDetailsResponse = restTemplate.exchange(configuration.getUserDetailsApi() + user.getUser().getId(),
+                                HttpMethod.GET, null, new ParameterizedTypeReference<UserDetails>() {
+                                });
+                        UserDetails userDetails = userDetailsResponse.getBody();
+                        if (userDetails != null) {
+                            emails.put(user.getUser().getId(), userDetails.getEmail());
+                        }
+                    });
 
             notifyUsersForChangedPosition(response);
 
@@ -57,11 +78,10 @@ public class LeaderboardNotifierService {
             //  or the participant changed the position in the leaderboard
             EventType currentEventType = EventType.ANY_LEADERBOARD_CHANGE;
             for (NotifierType notifierType : configuration.getNotifiers().get(currentEventType)) {
-                notificationServices.get(notifierType).notify(new FullLeaderboardNotification(response));
+                notificationServices.get(notifierType).notify(new FullLeaderboardNotification(response), contest.getSlackChannel());
             }
 
-            leaderboard.clear();
-            leaderboard.addAll(response);
+            leaderboards.put(contest.getContestId(), response);
         }
     }
 
@@ -69,30 +89,13 @@ public class LeaderboardNotifierService {
         int size = Math.min(newLeaderboard.size(), leaderboard.size());
 
         List<String> emails = IntStream.range(0, size)
-                .filter(i -> !leaderboard.get(i).equals(newLeaderboard.get(i)))
-                .mapToObj(i -> leaderboard.get(i).getEmail())
+                .filter(i -> !leaderboards.get(i).equals(newLeaderboard.get(i)))
+                .mapToObj(i -> leaderboards.get(i).getEmail())
                 .collect(Collectors.toList());
         emails.forEach(email -> {
             for (NotifierType notifierType : configuration.getNotifiers().get(EventType.PARTICIPANT_SCORE_CHANGE)) {
                 notificationServices.get(notifierType).notify(email, new PersonalLeaderboardNotification(newLeaderboard, email));
             }
         });
-    }
-
-    @PostConstruct
-    private void init() {
-        executorService.scheduleAtFixedRate(this::getLeaderBoard, 0, configuration.getPeriod(), TimeUnit.SECONDS);
-    }
-
-    @PreDestroy
-    private void destroy() {
-        if (executorService != null) {
-            executorService.shutdown();
-            try {
-                executorService.awaitTermination(1, TimeUnit.SECONDS);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
     }
 }
