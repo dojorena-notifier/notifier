@@ -16,6 +16,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.*;
+import java.util.concurrent.ScheduledExecutorService;
 
 @Service
 public class LeaderboardNotifierService {
@@ -23,6 +25,7 @@ public class LeaderboardNotifierService {
     private final Configuration configuration;
     private final RestTemplate restTemplate;
     private final Map<String, List<User>> leaderboards;
+    private final Map<Long, String> emails = new HashMap<>();
     private final SlackNotificationService slackNotificationService;
 
     @Value("${leaderboardApi}")
@@ -42,17 +45,28 @@ public class LeaderboardNotifierService {
         ResponseEntity<List<User>> responseEntity = restTemplate.exchange(getLeaderboardApiBuilder.toString(),
                 HttpMethod.GET, null, new ParameterizedTypeReference<List<User>>() {
                 });
+
         List<User> response = responseEntity.getBody();
 
         if (response != null && !response.equals(leaderboards.get(contest.getContestId())) ) {
             LOGGER.info("There are changes in leaderboard!");
 
-            // notifyChanges(response);
+            response.stream().filter(user -> !emails.containsKey(user.getUser().getId()))
+                    .forEach(user -> {
+                        ResponseEntity<UserDetails> userDetailsResponse = restTemplate.exchange(configuration.getUserDetailsApi() + user.getUser().getId(),
+                                HttpMethod.GET, null, new ParameterizedTypeReference<UserDetails>() {
+                                });
+                        UserDetails userDetails = userDetailsResponse.getBody();
+                        if (userDetails != null) {
+                            emails.put(user.getUser().getId(), userDetails.getEmail());
+                        }
+                    });
+
 
             // TODO: determine the type of the change - is it just a participant score change
             //  or the participant changed the position in the leaderboard
             EventType currentEventType = EventType.ANY_LEADERBOARD_CHANGE;
-            for (Map.Entry<EventType, Set<NotifierType>> notifiersConfig : configuration.getNotifiers().entrySet()) {
+            for (Map.Entry<EventType, Set<NotifierType>> notifiersConfig : contest.getNotifiers().entrySet()) {
                 if (currentEventType == notifiersConfig.getKey()) {
                     for (NotifierType notifierType : notifiersConfig.getValue()) {
                         notificationServiceFactory(notifiersConfig.getKey(), notifierType)

@@ -6,13 +6,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PreDestroy;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.*;
 
 @Service
-public class SubscriptionService {
+public class NotificationManagingService {
 
     private static final int INITIAL_DELAY = 0;
     private final Map<String, ScheduledFuture<?>> subscriptions;
@@ -25,18 +24,18 @@ public class SubscriptionService {
     private final ScheduledExecutorService executorService;
 
     @Autowired
-    public SubscriptionService(LeaderboardNotifierService leaderboardService) {
+    public NotificationManagingService(LeaderboardNotifierService leaderboardService) {
         this.leaderboardService = leaderboardService;
         this.subscriptions = new ConcurrentHashMap<>();
         this.executorService = Executors.newScheduledThreadPool(poolSize);
     }
 
-    public void subscribeContest(final Contest contest){
+    public void startNotifications(final Contest contest){
         ScheduledFuture<?> future = executorService.scheduleAtFixedRate(() ->leaderboardService.getLeaderBoard(contest), INITIAL_DELAY, schedulePeriod, TimeUnit.SECONDS);
         subscriptions.put(contest.getContestId(), future);
     }
 
-    public void unsubscribeContest(final String contestId){
+    public void stopNotifications(final String contestId){
         Optional.ofNullable(subscriptions.get(contestId)).ifPresent(future -> {
             future.cancel(false);
             subscriptions.remove(contestId);
