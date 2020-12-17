@@ -14,6 +14,9 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Service
 public class LeaderboardNotifierService {
@@ -21,15 +24,21 @@ public class LeaderboardNotifierService {
     private final Configuration configuration;
     private final RestTemplate restTemplate;
     private final Map<String, List<User>> leaderboards;
-    private final Map<Long, String> emails = new HashMap<>();
-    private final SlackNotificationService slackNotificationService;
+
+    private final Map<NotifierType, NotificationService> notificationServices;
+    private final UserDetailsService userDetailsService;
 
     @Autowired
-    public LeaderboardNotifierService(Configuration configuration, SlackNotificationService slackNotificationService) {
+    public LeaderboardNotifierService(Configuration configuration,
+                                      Collection<NotificationService> notificationServices,
+                                      UserDetailsService userDetailsService) {
         this.configuration = configuration;
         this.restTemplate = new RestTemplate();
-        this.slackNotificationService = slackNotificationService;
         this.leaderboards = new ConcurrentHashMap<>();
+        this.notificationServices = notificationServices.stream()
+                .collect(Collectors.toMap(NotificationService::getNotificationServiceTypeMapping, Function.identity()));
+        this.userDetailsService = userDetailsService;
+
     }
 
     public void getLeaderBoard(final Contest contest) {
@@ -45,18 +54,9 @@ public class LeaderboardNotifierService {
         if (response != null && !response.equals(leaderboards.get(contest.getContestId())) ) {
             LOGGER.info("There are changes in leaderboard!");
 
-            response.stream().filter(user -> !emails.containsKey(user.getUser().getId()))
-                    .forEach(user -> {
-                        ResponseEntity<UserDetails> userDetailsResponse = restTemplate.exchange(
-                                UriComponentsBuilder.fromHttpUrl(configuration.getUserDetailsApi()).pathSegment(String.valueOf(user.getUser().getId())).toUriString(),
-                                HttpMethod.GET, null, new ParameterizedTypeReference<UserDetails>() {
-                                });
-                        UserDetails userDetails = userDetailsResponse.getBody();
-                        if (userDetails != null) {
-                            emails.put(user.getUser().getId(), userDetails.getEmail());
-                        }
-                    });
-
+            if (leaderboards.size() > 0) {
+                notifyUsersForChangedPosition(response, contest);
+            }
 
             // TODO: determine the type of the change - is it just a participant score change
             //  or the participant changed the position in the leaderboard
@@ -64,8 +64,7 @@ public class LeaderboardNotifierService {
             for (Map.Entry<EventType, Set<NotifierType>> notifiersConfig : contest.getNotifiers().entrySet()) {
                 if (currentEventType == notifiersConfig.getKey()) {
                     for (NotifierType notifierType : notifiersConfig.getValue()) {
-                        notificationServiceFactory(notifiersConfig.getKey(), notifierType)
-                                .notify(new LeaderBoard(response), contest);
+                        notificationServices.get(notifierType).notify(new FullLeaderboardNotification(response, userDetailsService), contest);
                     }
                 }
             }
@@ -74,11 +73,18 @@ public class LeaderboardNotifierService {
         }
     }
 
-    private NotificationService<LeaderBoard> notificationServiceFactory(EventType eventType, NotifierType notifierType) {
-        if (eventType == EventType.ANY_LEADERBOARD_CHANGE && notifierType == NotifierType.SLACK) {
-            return slackNotificationService;
-        }
-        return null;
-    }
+    private void notifyUsersForChangedPosition(List<User> newLeaderboard, Contest contest) {
+        List<User> leaderboard = leaderboards.get(contest.getContestId());
+        int size = Math.min(newLeaderboard.size(), leaderboard.size());
 
+        List<UserDetails> userDetails = IntStream.range(0, size)
+                .filter(i -> !leaderboard.get(i).equals(newLeaderboard.get(i)))
+                .mapToObj(i -> userDetailsService.getUserDetails(leaderboard.get(i).getUser().getId()))
+                .collect(Collectors.toList());
+        userDetails.forEach(user -> {
+            for (NotifierType notifierType : contest.getNotifiers().get(EventType.PARTICIPANT_SCORE_CHANGE)) {
+                notificationServices.get(notifierType).notify(user, new PersonalLeaderboardNotification(newLeaderboard, user), contest);
+            }
+        });
+    }
 }
