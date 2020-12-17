@@ -98,13 +98,16 @@ public class SlackNotificationService implements NotificationService<LeaderBoard
                 .setChannelId(channelToPostIn)
                 .setBlocks(Collections.singletonList(Divider.builder().build()))
                 .build());
-
     }
 
     void postMessagePart(ChatPostMessageParams chatPostMessageParams) {
         Result<ChatPostMessageResponse, SlackError> postResult = slackClient.postMessage(chatPostMessageParams).join();
-
-        ChatPostMessageResponse response = postResult.unwrapOrElseThrow(); // release failure here as a RTE
+        try {
+            ChatPostMessageResponse chatPostMessageResponse = postResult.unwrapOrElseThrow();
+            LOGGER.debug("Slack notification send successfully!");
+        } catch (Exception e) {
+            LOGGER.warn("Error occurred while trying to send Slack notification: {}", e.getMessage());
+        }
     }
 
     public void slackPostSample(LeaderBoard newLeaderBoard) {

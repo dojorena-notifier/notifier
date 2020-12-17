@@ -13,6 +13,7 @@ import java.util.Set;
 @Component
 public class Configuration {
     private String leaderboardApi;
+    private String userDetailsApi;
     private int period;
     private int threadPoolSize;
     private String contestId;
@@ -56,6 +57,14 @@ public class Configuration {
 
     public void setNotifiers(Map<EventType, Set<NotifierType>> notifiers) {
         this.notifiers = notifiers;
+    }
+
+    public String getUserDetailsApi() {
+        return userDetailsApi;
+    }
+
+    public void setUserDetailsApi(String userDetailsApi) {
+        this.userDetailsApi = userDetailsApi;
     }
 }
 

@@ -9,7 +9,11 @@ public class User {
     private UserInfo user;
     private long score;
 
-    public String getEmail(){
-        return this.user.getEmail();
+    public String getEmail() {
+        return user.getEmail();
+    }
+
+    public void setEmail(String email) {
+        this.user.setEmail(email);
     }
 }

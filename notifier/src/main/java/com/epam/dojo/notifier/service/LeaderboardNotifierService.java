@@ -13,15 +13,10 @@ import org.springframework.web.client.RestTemplate;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 @Service
 public class LeaderboardNotifierService {
@@ -44,21 +39,33 @@ public class LeaderboardNotifierService {
         this.executorService = Executors.newScheduledThreadPool(configuration.getThreadPoolSize());
     }
 
-    public void getLeaderBoard() {
+
+    public void getLeaderBoard(Contest contest) {
         ResponseEntity<List<User>> responseEntity = restTemplate.exchange(configuration.getLeaderboardApi(),
                 HttpMethod.GET, null, new ParameterizedTypeReference<List<User>>() {
                 });
+
         List<User> response = responseEntity.getBody();
 
         if (response != null && !leaderboard.equals(response)) {
             LOGGER.info("There are changes in leaderboard!");
 
-            // notifyChanges(response);
+            response.stream().filter(user -> !leaderboard.contains(user))
+                    .forEach(user -> {
+                        ResponseEntity<UserDetails> userDetailsResponse = restTemplate.exchange(configuration.getUserDetailsApi() + user.getUser().getId(),
+                                HttpMethod.GET, null, new ParameterizedTypeReference<UserDetails>() {
+                                });
+                        UserDetails userDetails = userDetailsResponse.getBody();
+                        if (userDetails != null) {
+                            user.setEmail(userDetails.getEmail());
+                        }
+                    });
+
 
             // TODO: determine the type of the change - is it just a participant score change
             //  or the participant changed the position in the leaderboard
             EventType currentEventType = EventType.ANY_LEADERBOARD_CHANGE;
-            for (Map.Entry<EventType, Set<NotifierType>> notifiersConfig : configuration.getNotifiers().entrySet()) {
+            for (Map.Entry<EventType, Set<NotifierType>> notifiersConfig : contest.getNotifiers().entrySet()) {
                 if (currentEventType == notifiersConfig.getKey()) {
                     for (NotifierType notifierType : notifiersConfig.getValue()) {
                         notificationServiceFactory(notifiersConfig.getKey(), notifierType)
@@ -79,20 +86,16 @@ public class LeaderboardNotifierService {
         return null;
     }
 
-    private void notifyChanges(List<User> newLeaderboard) {
-        int size = Math.min(newLeaderboard.size(), leaderboard.size());
-
-        List<String> emails = IntStream.range(0, size)
-                .filter(i -> !leaderboard.get(i).equals(newLeaderboard.get(i)))
-                .mapToObj(i -> leaderboard.get(i).getEmail())
-                .collect(Collectors.toList());
-        emails.forEach(e -> notificationServices.forEach(service ->
-                        service.notify(e, new LeaderboardNotification())));
-    }
-
     @PostConstruct
     private void init() {
-        executorService.scheduleAtFixedRate(this::getLeaderBoard, 0, configuration.getPeriod(), TimeUnit.SECONDS);
+        // TODO: remove this after contest feature is implemented
+        Map<EventType, Set<NotifierType>> map = new HashMap<>();
+        Set<NotifierType> set = new HashSet<>();
+        set.add(NotifierType.SLACK);
+        map.put(EventType.ANY_LEADERBOARD_CHANGE, set);
+        Contest contest = new Contest("152", map);
+
+        executorService.scheduleAtFixedRate(() -> getLeaderBoard(contest), 0, configuration.getPeriod(), TimeUnit.SECONDS);
     }
 
     @PreDestroy
