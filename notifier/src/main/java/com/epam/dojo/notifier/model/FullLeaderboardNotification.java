@@ -13,19 +13,17 @@ import static com.epam.dojo.notifier.model.SlackNotificationUtils.makeBold;
 public class FullLeaderboardNotification extends LeaderboardNotification {
 
     private final List<User> leaderboard;
-    private final UserDetailsService userDetailsService;
 
     public FullLeaderboardNotification(List<User> leaderboard, UserDetailsService userDetailsService) {
-        super(leaderboard, "Leaderboard update");
+        super(leaderboard, userDetailsService, "Leaderboard update");
         this.leaderboard = leaderboard;
-        this.userDetailsService = userDetailsService;
     }
 
     @Override
     public final Text buildLeaderboardNames(BiFunction<String, SlackClient, String> getSlackUserId, SlackClient slackClient) {
         StringBuilder names = new StringBuilder();
         leaderboard.forEach(user -> {
-            String userId = getSlackUserId.apply(userDetailsService.getUserEmail(user.getUser().getId()), slackClient);
+            String userId = getSlackUserId.apply(getUserDetailsService().getUserEmail(user.getUser().getId()), slackClient);
             String nameWithLink = "<slack://user?team=null&id=" + userId + "|" + user.getUser().getName() + ">";
             names.append(makeBold(getPositionAndIncrease()))
                     .append(". ")

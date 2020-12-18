@@ -8,23 +8,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import java.util.*;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -72,8 +63,8 @@ public class LeaderboardNotifierService {
             // TODO: determine the type of the change - is it just a participant score change
             //  or the participant changed the position in the leaderboard
             EventType currentEventType = EventType.ANY_LEADERBOARD_CHANGE;
-            for (NotifierType notifierType : configuration.getNotifiers().get(currentEventType)) {
-                notificationServices.get(notifierType).notify(new FullLeaderboardNotification(response), contest.getSlackChannel());
+            for (NotifierType notifierType : contest.getNotifiers().get(currentEventType)) {
+                notificationServices.get(notifierType).notify(new FullLeaderboardNotification(response, userDetailsService), contest);
             }
 
             leaderboards.put(contest.getContestId(), response);
@@ -90,7 +81,8 @@ public class LeaderboardNotifierService {
                 .collect(Collectors.toList());
         userDetails.forEach(user -> {
             for (NotifierType notifierType : contest.getNotifiers().get(EventType.PARTICIPANT_SCORE_CHANGE)) {
-                notificationServices.get(notifierType).notify(user, new PersonalLeaderboardNotification(newLeaderboard, user), contest);
+                notificationServices.get(notifierType)
+                        .notify(user, new PersonalLeaderboardNotification(newLeaderboard,userDetailsService, user), contest);
             }
         });
     }

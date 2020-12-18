@@ -1,5 +1,6 @@
 package com.epam.dojo.notifier.model;
 
+import com.epam.dojo.notifier.service.UserDetailsService;
 import com.hubspot.slack.client.SlackClient;
 import com.hubspot.slack.client.methods.params.chat.ChatPostMessageParams;
 import com.hubspot.slack.client.models.Attachment;
@@ -30,8 +31,11 @@ public abstract class LeaderboardNotification implements Notification {
 
     private int positionCounter = 1;
 
-    public LeaderboardNotification(List<User> leaderboard, String title) {
+    private final UserDetailsService userDetailsService;
+
+    public LeaderboardNotification(List<User> leaderboard, UserDetailsService userDetailsService, String title) {
         this.leaderboard = leaderboard;
+        this.userDetailsService = userDetailsService;
         this.title = title;
     }
 

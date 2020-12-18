@@ -1,5 +1,6 @@
 package com.epam.dojo.notifier.model;
 
+import com.epam.dojo.notifier.service.UserDetailsService;
 import com.hubspot.slack.client.SlackClient;
 import com.hubspot.slack.client.models.blocks.objects.Text;
 import com.hubspot.slack.client.models.blocks.objects.TextType;
@@ -13,8 +14,8 @@ public class PersonalLeaderboardNotification extends LeaderboardNotification {
 
     private final UserDetails userDetails;
 
-    public PersonalLeaderboardNotification(List<User> leaderboard, UserDetails userDetails) {
-        super(leaderboard, "Your position in leaderboard has changed");
+    public PersonalLeaderboardNotification(List<User> leaderboard, UserDetailsService userDetailsService, UserDetails userDetails) {
+        super(leaderboard, userDetailsService, "Your position in leaderboard has changed");
         this.userDetails = userDetails;
     }
 
@@ -23,8 +24,10 @@ public class PersonalLeaderboardNotification extends LeaderboardNotification {
         StringBuilder names = new StringBuilder();
 
         getLeaderboard().forEach(user -> {
+            String userId = getSlackUserId.apply(getUserDetailsService().getUserEmail(user.getUser().getId()), slackClient);
+            String nameWithLink = "<slack://user?team=null&id=" + userId + "|" + user.getUser().getName() + ">";
             String name = (user.getUser().getId() == userDetails.getId()) ?
-                    makeBold(user.getUser().getName()) : user.getUser().getName();
+                    makeBold(user.getUser().getName()) : userId.isEmpty() ? user.getUser().getName() : nameWithLink;
             names.append(makeBold(getPositionAndIncrease()))
                     .append(". ")
                     .append(name)
