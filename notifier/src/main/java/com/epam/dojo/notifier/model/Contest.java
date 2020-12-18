@@ -10,12 +10,14 @@ public class Contest {
     private String contestId;
     private String title;
     private String slackToken;
-    private String slackChannel = "gamified-hiring";
+    private String slackChannel;
     private Map<EventType, Set<NotifierType>> notifiers;
 
     public Contest() {
         notifiers = new HashMap<>();
         notifiers.put(EventType.ANY_LEADERBOARD_CHANGE,
+                new HashSet<>(Arrays.asList(NotifierType.SLACK)));
+        notifiers.put(EventType.PARTICIPANT_SCORE_CHANGE,
                 new HashSet<>(Arrays.asList(NotifierType.SLACK)));
     }
 }
