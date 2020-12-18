@@ -1,6 +1,7 @@
 package com.epam.dojo.notifier.service;
 
 import com.epam.dojo.notifier.model.*;
+import com.epam.dojo.notifier.model.notification.Notification;
 
 public interface NotificationService {
 
