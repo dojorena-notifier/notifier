@@ -1,6 +1,6 @@
 package com.epam.dojo.notifier.service;
 
-import com.epam.dojo.notifier.configuration.Configuration;
+import com.epam.dojo.notifier.configuration.RestApiConfiguration;
 import com.epam.dojo.notifier.model.UserDetails;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
@@ -16,12 +16,12 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 public class UserDetailsService {
 
-    private final Configuration configuration;
+    private final RestApiConfiguration configuration;
     private final RestTemplate restTemplate;
     private final Map<Long, UserDetails> userDetailsCache;
 
     @Autowired
-    public UserDetailsService(Configuration configuration) {
+    public UserDetailsService(RestApiConfiguration configuration) {
         this.configuration = configuration;
         this.restTemplate = new RestTemplate();
         this.userDetailsCache = new ConcurrentHashMap<>();

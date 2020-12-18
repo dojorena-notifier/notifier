@@ -1,4 +1,4 @@
-package com.epam.dojo.notifier.model;
+package com.epam.dojo.notifier.model.notification;
 
 import com.hubspot.slack.client.SlackClient;
 import com.hubspot.slack.client.methods.params.chat.ChatPostMessageParams;

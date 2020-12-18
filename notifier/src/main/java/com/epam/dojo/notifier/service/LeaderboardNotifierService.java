@@ -1,7 +1,9 @@
 package com.epam.dojo.notifier.service;
 
-import com.epam.dojo.notifier.configuration.Configuration;
+import com.epam.dojo.notifier.configuration.RestApiConfiguration;
 import com.epam.dojo.notifier.model.*;
+import com.epam.dojo.notifier.model.notification.FullLeaderboardNotification;
+import com.epam.dojo.notifier.model.notification.PersonalLeaderboardNotification;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +25,7 @@ import java.util.stream.IntStream;
 @Service
 public class LeaderboardNotifierService {
     private static final Logger LOGGER = LoggerFactory.getLogger(LeaderboardNotifierService.class);
-    private final Configuration configuration;
+    private final RestApiConfiguration configuration;
     private final RestTemplate restTemplate;
     private final Map<String, List<User>> leaderboards;
 
@@ -31,7 +33,7 @@ public class LeaderboardNotifierService {
     private final UserDetailsService userDetailsService;
 
     @Autowired
-    public LeaderboardNotifierService(Configuration configuration,
+    public LeaderboardNotifierService(RestApiConfiguration configuration,
                                       Collection<NotificationService> notificationServices,
                                       UserDetailsService userDetailsService) {
         this.configuration = configuration;

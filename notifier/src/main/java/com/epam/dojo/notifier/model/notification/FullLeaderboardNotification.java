@@ -1,5 +1,6 @@
-package com.epam.dojo.notifier.model;
+package com.epam.dojo.notifier.model.notification;
 
+import com.epam.dojo.notifier.model.User;
 import com.epam.dojo.notifier.service.UserDetailsService;
 import com.hubspot.slack.client.SlackClient;
 import com.hubspot.slack.client.models.blocks.objects.Text;
@@ -8,7 +9,7 @@ import com.hubspot.slack.client.models.blocks.objects.TextType;
 import java.util.List;
 import java.util.function.BiFunction;
 
-import static com.epam.dojo.notifier.model.SlackNotificationUtils.makeBold;
+import static com.epam.dojo.notifier.model.notification.SlackNotificationUtils.makeBold;
 
 public class FullLeaderboardNotification extends LeaderboardNotification {
 

@@ -5,30 +5,13 @@ import org.springframework.stereotype.Component;
 
 @ConfigurationProperties
 @Component
-public class Configuration {
+public class RestApiConfiguration {
+
     private String leaderboardApi;
     private String userDetailsApi;
-    private int threadPoolSchedulePeriodSeconds;
-    private int threadPoolSize;
-
-    public int getThreadPoolSize() {
-        return threadPoolSize;
-    }
-
-    public void setThreadPoolSize(int threadPoolSize) {
-        this.threadPoolSize = threadPoolSize;
-    }
 
     public void setLeaderboardApi(String leaderboardApi) {
         this.leaderboardApi = leaderboardApi;
-    }
-
-    public int getThreadPoolSchedulePeriodSeconds() {
-        return threadPoolSchedulePeriodSeconds;
-    }
-
-    public void setThreadPoolSchedulePeriodSeconds(int threadPoolSchedulePeriodSeconds) {
-        this.threadPoolSchedulePeriodSeconds = threadPoolSchedulePeriodSeconds;
     }
 
     public String getLeaderboardApi() {
