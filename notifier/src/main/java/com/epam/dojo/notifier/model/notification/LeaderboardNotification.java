@@ -1,5 +1,6 @@
-package com.epam.dojo.notifier.model;
+package com.epam.dojo.notifier.model.notification;
 
+import com.epam.dojo.notifier.model.User;
 import com.epam.dojo.notifier.service.UserDetailsService;
 import com.hubspot.slack.client.SlackClient;
 import com.hubspot.slack.client.methods.params.chat.ChatPostMessageParams;
@@ -15,7 +16,7 @@ import lombok.Getter;
 import java.util.List;
 import java.util.function.BiFunction;
 
-import static com.epam.dojo.notifier.model.SlackNotificationUtils.makeBold;
+import static com.epam.dojo.notifier.model.notification.SlackNotificationUtils.makeBold;
 
 @Getter
 public abstract class LeaderboardNotification implements Notification {

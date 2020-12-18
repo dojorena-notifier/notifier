@@ -2,6 +2,8 @@ package com.epam.dojo.notifier.service;
 
 import com.epam.dojo.notifier.configuration.Configuration;
 import com.epam.dojo.notifier.model.*;
+import com.epam.dojo.notifier.model.notification.FullLeaderboardNotification;
+import com.epam.dojo.notifier.model.notification.PersonalLeaderboardNotification;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
