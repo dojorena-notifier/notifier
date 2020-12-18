@@ -1,10 +1,13 @@
 package com.epam.dojo.notifier.service;
 
+import com.epam.dojo.notifier.model.Contest;
 import com.epam.dojo.notifier.model.LeaderBoard;
 import com.epam.dojo.notifier.model.Notification;
 import com.epam.dojo.notifier.model.User;
 import com.hubspot.algebra.Result;
 import com.hubspot.slack.client.SlackClient;
+import com.hubspot.slack.client.SlackClientFactory;
+import com.hubspot.slack.client.SlackClientRuntimeConfig;
 import com.hubspot.slack.client.methods.params.chat.ChatPostMessageParams;
 import com.hubspot.slack.client.methods.params.conversations.ConversationOpenParams;
 import com.hubspot.slack.client.methods.params.users.UserEmailParams;
@@ -18,7 +21,6 @@ import com.hubspot.slack.client.models.response.conversations.ConversationsOpenR
 import com.hubspot.slack.client.models.response.users.UsersInfoResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
@@ -29,16 +31,13 @@ public class SlackNotificationService implements NotificationService<LeaderBoard
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SlackNotificationService.class);
 
-    @Autowired
-    private SlackClient slackClient;
-    private String channelToPostIn = "software-development";
-
     @Override
-    public void notify(String email, Notification notification) {
+    public void notify(String email, Notification notification, Contest contest) {
         try {
+            SlackClient slackClient = getSlackClient(contest.getSlackToken());
             slackClient.postMessage(notification
                     .convertToSlackNotification()
-                    .setChannelId(getConversationId(email))
+                    .setChannelId(getConversationId(email, slackClient))
                     .build());
         } catch (IllegalStateException e) {
             LOGGER.warn("Error occurred while trying to send Slack notification to user with email {}.", email);
@@ -47,7 +46,7 @@ public class SlackNotificationService implements NotificationService<LeaderBoard
         LOGGER.info("Slack notification send to user with email {}.", email);
     }
 
-    private String getConversationId(String email) {
+    private String getConversationId(String email, SlackClient slackClient) {
         UsersInfoResponse usersInfoResponse = slackClient
                 .lookupUserByEmail(UserEmailParams.builder()
                         .setEmail(email)
@@ -63,14 +62,21 @@ public class SlackNotificationService implements NotificationService<LeaderBoard
         return conversationsOpenResponse.getConversation().getId();
     }
 
-    // post to channel
+    private SlackClient getSlackClient(String token) {
+        SlackClientRuntimeConfig runtimeConfig = SlackClientRuntimeConfig.builder()
+                .setTokenSupplier(() -> token)
+                .build();
+
+        return SlackClientFactory.defaultFactory().build(runtimeConfig);
+    }
 
     @Override
-    public void notify(LeaderBoard newLeaderBoard) {
+    public void notify(LeaderBoard newLeaderBoard, Contest contest) {
+        SlackClient slackClient = getSlackClient(contest.getSlackToken());
 
         // post header
         postMessagePart(ChatPostMessageParams.builder()
-                .setChannelId(channelToPostIn)
+                .setChannelId(contest.getSlackChannel())
                 .setBlocks(Arrays.asList(
                         Divider.builder().build(),
                         Section.of(Text.of(TextType.MARKDOWN, "*Leader board update*"))
@@ -78,29 +84,31 @@ public class SlackNotificationService implements NotificationService<LeaderBoard
                                         Text.of(TextType.MARKDOWN, "*User*"),
                                         Text.of(TextType.MARKDOWN, "*Score*")
                                 )
-                )).build());
+                )).build(), slackClient);
 
         // post each participant separately
         int i = 1;
         for (User user : newLeaderBoard.getUsers()) {
+            if (i > 20) break;
             postMessagePart(ChatPostMessageParams.builder()
-                    .setChannelId(channelToPostIn)
+                    .setChannelId(contest.getSlackChannel())
                     .setBlocks(Collections.singletonList(
-                            Section.builder().setText(Text.of(TextType.PLAIN_TEXT, " "/*String.valueOf(i++)*/)).addFields(
+                            Section.builder().setText(Text.of(TextType.PLAIN_TEXT, " "/*String.valueOf(i)*/)).addFields(
                                     Text.of(TextType.MARKDOWN, user.getUser().getName()),
                                     Text.of(TextType.MARKDOWN, String.valueOf(user.getScore()))
                             ).build()
-                    )).build());
+                    )).build(), slackClient);
+            i++;
         }
 
         // post footer
         postMessagePart(ChatPostMessageParams.builder()
-                .setChannelId(channelToPostIn)
+                .setChannelId(contest.getSlackChannel())
                 .setBlocks(Collections.singletonList(Divider.builder().build()))
-                .build());
+                .build(), slackClient);
     }
 
-    void postMessagePart(ChatPostMessageParams chatPostMessageParams) {
+    void postMessagePart(ChatPostMessageParams chatPostMessageParams, SlackClient slackClient) {
         Result<ChatPostMessageResponse, SlackError> postResult = slackClient.postMessage(chatPostMessageParams).join();
         try {
             ChatPostMessageResponse chatPostMessageResponse = postResult.unwrapOrElseThrow();
@@ -108,40 +116,5 @@ public class SlackNotificationService implements NotificationService<LeaderBoard
         } catch (Exception e) {
             LOGGER.warn("Error occurred while trying to send Slack notification: {}", e.getMessage());
         }
-    }
-
-    public void slackPostSample(LeaderBoard newLeaderBoard) {
-        Result<ChatPostMessageResponse, SlackError> postResult = slackClient.postMessage(
-                ChatPostMessageParams.builder()
-                        .setText("Here is an example message with blocks:")
-                        .setChannelId(channelToPostIn)
-                        .setBlocks(Arrays.asList(
-                                Blocks.markdownSection(":newspaper:  *Paper Company Newsletter*  :newspaper:"),
-                                Blocks.markdownContext("*November 12, 2019*  |  Sales Team Announcements"),
-                                Blocks.divider(),
-                                Blocks.markdownSection(":loud_sound: *IN CASE YOU MISSED IT* :loud_sound:"),
-                                Blocks.markdownSection("Replay our screening of *Threat Level Midnight* and pick up a copy of the DVD to give to your customers at the front desk.")
-                                        .withAccessory(Blocks.plainTextButton("Watch Now")),
-                                Blocks.markdownSection("The *2019 Dundies* happened. \nAwards were given, heroes were recognized. \nCheck out *#dundies-2019* to see who won awards."),
-                                Blocks.divider(),
-                                Blocks.markdownSection(":calendar: |   *UPCOMING EVENTS*  | :calendar:"),
-                                Blocks.markdownSection("`11/20-11/22` *Beet the Competition* _ annual retreat at Schrute Farms_")
-                                        .withAccessory(Blocks.plainTextButton("RSVP")),
-                                Blocks.markdownSection("`12/01` *Toby's Going Away Party* at _Benihana_")
-                                        .withAccessory(Blocks.plainTextButton("Learn More")),
-                                Blocks.markdownSection("`11/13` :pretzel: *Pretzel Day* :pretzel: at _Scranton Office_")
-                                        .withAccessory(Blocks.plainTextButton("RSVP")),
-                                Blocks.divider(),
-                                Blocks.markdownSection(":calendar: |   *PAST EVENTS*  | :calendar:"),
-                                Blocks.markdownSection("`10/21` *Conference Room Meeting*")
-                                        .withAccessory(Blocks.staticSelectMenu("Manage",
-                                                Blocks.option("Edit it", "value=0"),
-                                                Blocks.option("Read it", "value=1"),
-                                                Blocks.option("Save it", "value=2"))),
-                                Blocks.divider()
-                        )).build()
-        ).join();
-
-        ChatPostMessageResponse response = postResult.unwrapOrElseThrow(); // release failure here as a RTE
     }
 }

@@ -19,16 +19,18 @@ import java.util.Map;
 @Service
 public class GamesService {
 
-    @Value("${gamesApi}")
+    @Value("${games-api}")
     private String gamesApi;
 
     private final RestTemplate restTemplate;
+    private final NotificationManagingService notificationManagingService;
 
     private Map<String, Game> gameRepo;
     private final Map<String, Contest> contestRepo = new HashMap<>();
 
     @Autowired
-    public GamesService() {
+    public GamesService(final NotificationManagingService notificationManagingService) {
+        this.notificationManagingService = notificationManagingService;
         this.restTemplate = new RestTemplate();
     }
 
@@ -44,6 +46,10 @@ public class GamesService {
         return gameRepo.values();
     }
 
+    public void invalidateGamesCache() {
+        gameRepo = null;
+    }
+
     public Game getGameById(String id) {
         return gameRepo.get(id);
     }
@@ -57,12 +63,12 @@ public class GamesService {
     }
 
     public void addContest(Contest contest) {
-        // TODO: start the notifications
+        notificationManagingService.startNotifications(contest);
         contestRepo.put(contest.getContestId(), contest);
     }
 
     public void stopContestById(String contestId) {
-        // TODO: really stop the notifications for that contest
+        notificationManagingService.stopNotifications(contestId);
         contestRepo.remove(contestId);
     }
 }

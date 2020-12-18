@@ -1,10 +1,11 @@
 package com.epam.dojo.notifier.service;
 
+import com.epam.dojo.notifier.model.Contest;
 import com.epam.dojo.notifier.model.Notification;
 import com.epam.dojo.notifier.model.NotificationMessage;
 
 public interface NotificationService<T extends NotificationMessage> {
 
-    void notify(String email, Notification notification);
-    void notify(T notificationMessage);
+    void notify(String email, Notification notification, Contest contest);
+    void notify(T notificationMessage, Contest contest);
 }
