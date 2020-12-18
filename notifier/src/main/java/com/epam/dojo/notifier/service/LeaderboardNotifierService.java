@@ -70,7 +70,7 @@ public class LeaderboardNotifierService {
                 if (currentEventType == notifiersConfig.getKey()) {
                     for (NotifierType notifierType : notifiersConfig.getValue()) {
                         notificationServiceFactory(notifiersConfig.getKey(), notifierType)
-                                .notify(new LeaderBoard(response));
+                                .notify(new LeaderBoard(response, this.emails));
                     }
                 }
             }
