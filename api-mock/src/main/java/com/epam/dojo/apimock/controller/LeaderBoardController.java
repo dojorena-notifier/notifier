@@ -26,7 +26,7 @@ public class LeaderBoardController {
         return leaderBoardProvider.generateLeaderBoard(requestId.getAndIncrement());
     }
 
-    @GetMapping("/api/v1/games")
+    @GetMapping("/api/v1/events")
     public Object getGames() {
         return leaderBoardProvider.getGames();
     }
