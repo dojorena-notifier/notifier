@@ -1,7 +1,7 @@
 package com.epam.dojo.notifier.service;
 
 import com.epam.dojo.notifier.configuration.Configuration;
-import com.epam.dojo.notifier.model.UserDetails;
+import com.epam.dojo.notifier.model.user.UserDetails;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;

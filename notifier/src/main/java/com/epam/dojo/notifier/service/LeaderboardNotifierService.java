@@ -2,6 +2,10 @@ package com.epam.dojo.notifier.service;
 
 import com.epam.dojo.notifier.configuration.Configuration;
 import com.epam.dojo.notifier.model.*;
+import com.epam.dojo.notifier.model.leaderboard.FullLeaderboardNotification;
+import com.epam.dojo.notifier.model.leaderboard.PersonalLeaderboardNotification;
+import com.epam.dojo.notifier.model.user.User;
+import com.epam.dojo.notifier.model.user.UserDetails;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -79,10 +83,11 @@ public class LeaderboardNotifierService {
                 .filter(i -> !leaderboard.get(i).equals(newLeaderboard.get(i)))
                 .mapToObj(i -> userDetailsService.getUserDetails(leaderboard.get(i).getUser().getId()))
                 .collect(Collectors.toList());
+
         userDetails.forEach(user -> {
             for (NotifierType notifierType : contest.getNotifiers().get(EventType.PARTICIPANT_SCORE_CHANGE)) {
                 notificationServices.get(notifierType)
-                        .notify(user, new PersonalLeaderboardNotification(newLeaderboard,userDetailsService, user), contest);
+                        .notify(user, new PersonalLeaderboardNotification(newLeaderboard, userDetailsService, user), contest);
             }
         });
     }

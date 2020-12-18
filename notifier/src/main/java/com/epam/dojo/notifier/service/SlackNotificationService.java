@@ -1,6 +1,7 @@
 package com.epam.dojo.notifier.service;
 
 import com.epam.dojo.notifier.model.*;
+import com.epam.dojo.notifier.model.user.UserDetails;
 import com.hubspot.algebra.Result;
 import com.hubspot.slack.client.SlackClient;
 import com.hubspot.slack.client.SlackClientFactory;

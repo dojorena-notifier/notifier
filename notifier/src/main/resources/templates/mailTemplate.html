@@ -24,6 +24,7 @@
 
 
 
+
     </style>
 </head>
 
@@ -37,8 +38,10 @@
         <th>Score</th>
     </tr>
     <tr th:each="user : ${users}">
-        <td th:text="${user.user.name}"</td>
-        <td th:text="${user.score}"</td>
+        <td th:text="${user.user.name}">
+        </td>
+        <td th:text="${user.score}">
+        </td>
     </tr>
 </table>
 

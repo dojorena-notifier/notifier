@@ -1,9 +1,11 @@
-package com.epam.dojo.notifier.service;
+package com.epam.dojo.notifier.service.emailNotifier;
 
 import com.epam.dojo.notifier.configuration.EmailConfig;
-import com.epam.dojo.notifier.model.LeaderBoard;
+import com.epam.dojo.notifier.model.Contest;
 import com.epam.dojo.notifier.model.Notification;
-import com.epam.dojo.notifier.model.User;
+import com.epam.dojo.notifier.model.NotifierType;
+import com.epam.dojo.notifier.model.user.UserDetails;
+import com.epam.dojo.notifier.service.NotificationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,10 +15,9 @@ import org.springframework.stereotype.Service;
 
 import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
-import java.util.List;
 
 @Service
-public class EmailNotificationService implements NotificationService<LeaderBoard> {
+public class EmailNotificationService implements NotificationService {
     private static final Logger LOGGER = LoggerFactory.getLogger(EmailNotificationService.class);
 
     @Autowired
@@ -26,36 +27,42 @@ public class EmailNotificationService implements NotificationService<LeaderBoard
     private JavaMailSender emailSender;
 
     @Autowired
-    private MailContentBuilder<LeaderBoard> mailContentBuilder;
+    private MailContentBuilder<Notification> mailContentBuilder;
 
-    @Override
-    public void notify(String email, Notification notification) {
-
-    }
-
-    @Override
-    public void notify(LeaderBoard notificationMessage) {
-        List<User> users = notificationMessage.getUsers();
-        users.forEach(user -> sendEmail(notificationMessage.getEmailById(user.getUser().getId()), notificationMessage));
-    }
-
-    private void sendEmail(String to, LeaderBoard data) {
+    private void sendEmail(String to, String data, Contest contest) {
         MimeMessage message = emailSender.createMimeMessage();
         MimeMessageHelper helper;
         try {
             helper = new MimeMessageHelper(message, true);
 
-            String content = mailContentBuilder.generateMailContent(data);
             helper.setFrom(emailConfig.getUsername());
             helper.setTo(to);
-            helper.setSubject("Leaderboard");
-            helper.setText(content, true);
+            helper.setSubject("Leaderboard change for " + contest.getTitle());
+            helper.setText(data, true);
 
             emailSender.send(message);
 
         } catch (MessagingException e) {
             LOGGER.warn("Email could not be sent: {}", e.getCause().getMessage());
         }
+    }
+
+    @Override
+    public NotifierType getNotificationServiceTypeMapping() {
+        return NotifierType.EMAIL;
+    }
+
+    // Notify user
+    @Override
+    public void notify(UserDetails userDetails, Notification notification, Contest contest) {
+        String data = mailContentBuilder.generateMailContent(notification);
+        sendEmail(userDetails.getEmail(), data, contest);
+    }
+
+    // Notify channel
+    @Override
+    public void notify(Notification notification, Contest contest) {
+
     }
 }
 

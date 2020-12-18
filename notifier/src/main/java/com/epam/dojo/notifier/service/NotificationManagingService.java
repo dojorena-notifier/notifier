@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.Map;
 import java.util.Optional;
@@ -28,6 +29,14 @@ public class NotificationManagingService {
         this.leaderboardService = leaderboardService;
         this.subscriptions = new ConcurrentHashMap<>();
         this.executorService = Executors.newScheduledThreadPool(poolSize);
+    }
+
+    @PostConstruct
+    private void test(){
+        Contest contest = new Contest();
+        contest.setContestId("152");
+        contest.setTitle("Contest 152");
+        startNotifications(contest);
     }
 
     public void startNotifications(final Contest contest){

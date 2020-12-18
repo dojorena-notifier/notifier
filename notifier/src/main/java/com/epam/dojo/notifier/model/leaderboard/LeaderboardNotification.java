@@ -1,5 +1,7 @@
-package com.epam.dojo.notifier.model;
+package com.epam.dojo.notifier.model.leaderboard;
 
+import com.epam.dojo.notifier.model.Notification;
+import com.epam.dojo.notifier.model.user.User;
 import com.epam.dojo.notifier.service.UserDetailsService;
 import com.hubspot.slack.client.SlackClient;
 import com.hubspot.slack.client.methods.params.chat.ChatPostMessageParams;

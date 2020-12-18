@@ -1,4 +1,4 @@
-package com.epam.dojo.notifier.model;
+package com.epam.dojo.notifier.model.user;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;

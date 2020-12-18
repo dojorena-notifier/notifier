@@ -1,4 +1,4 @@
-package com.epam.dojo.notifier.service;
+package com.epam.dojo.notifier.model;
 
 import com.hubspot.slack.client.models.blocks.Context;
 import com.hubspot.slack.client.models.blocks.Divider;
