@@ -1,9 +1,10 @@
 package com.epam.dojo.notifier.service;
 
-import com.epam.dojo.notifier.model.Notification;
-import com.epam.dojo.notifier.model.NotifierType;
+import com.epam.dojo.notifier.model.*;
 import com.hubspot.algebra.Result;
 import com.hubspot.slack.client.SlackClient;
+import com.hubspot.slack.client.SlackClientFactory;
+import com.hubspot.slack.client.SlackClientRuntimeConfig;
 import com.hubspot.slack.client.methods.params.chat.ChatPostMessageParams;
 import com.hubspot.slack.client.methods.params.conversations.ConversationOpenParams;
 import com.hubspot.slack.client.methods.params.users.UserEmailParams;
@@ -11,24 +12,12 @@ import com.hubspot.slack.client.models.response.SlackError;
 import com.hubspot.slack.client.models.response.chat.ChatPostMessageResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
 public class SlackNotificationService implements NotificationService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SlackNotificationService.class);
-
-    @Value("${slack.channel.name}")
-    private String channelToPostIn;
-
-    private final SlackClient slackClient;
-
-    @Autowired
-    public SlackNotificationService(SlackClient slackClient) {
-        this.slackClient = slackClient;
-    }
 
     @Override
     public NotifierType getNotificationServiceTypeMapping() {
@@ -37,24 +26,26 @@ public class SlackNotificationService implements NotificationService {
 
     // Notify user
     @Override
-    public void notify(String email, Notification notification) {
+    public void notify(UserDetails userDetails, Notification notification, Contest contest) {
+        SlackClient slackClient = getSlackClient(contest.getSlackToken());
         postMessagePart(notification
-                .convertToSlackNotification(this::getSlackUserId)
-                .setChannelId(getConversationId(email))
-                .build());
+                .convertToSlackNotification(this::getSlackUserId, slackClient)
+                .setChannelId(getConversationId(userDetails.getEmail(), slackClient))
+                .build(), slackClient);
     }
 
     // Notify channel
     @Override
-    public void notify(Notification notification, String slackChannel) {
+    public void notify(Notification notification, Contest contest) {
+        SlackClient slackClient = getSlackClient(contest.getSlackToken());
         postMessagePart(notification
-                .convertToSlackNotification(this::getSlackUserId)
-                .setChannelId(slackChannel)
-                .build());
+                .convertToSlackNotification(this::getSlackUserId, slackClient)
+                .setChannelId(contest.getSlackChannel())
+                .build(), slackClient);
 
     }
 
-    private void postMessagePart(ChatPostMessageParams chatPostMessageParams) {
+    private void postMessagePart(ChatPostMessageParams chatPostMessageParams, SlackClient slackClient) {
         Result<ChatPostMessageResponse, SlackError> postResult = slackClient.postMessage(chatPostMessageParams).join();
         try {
             postResult.unwrapOrElseThrow(); // release failure here as a RTE
@@ -65,11 +56,11 @@ public class SlackNotificationService implements NotificationService {
         LOGGER.info("Slack notification send to channel {}.", chatPostMessageParams.getChannelId());
     }
 
-    private String getConversationId(String email) {
+    private String getConversationId(String email, SlackClient slackClient) {
         try {
             return slackClient.openConversation(
                     ConversationOpenParams.builder()
-                            .addUsers(getSlackUserId(email))
+                            .addUsers(getSlackUserId(email, slackClient))
                             .build())
                     .join().unwrapOrElseThrow().getConversation().getId();
         } catch (IllegalStateException e) {
@@ -78,7 +69,15 @@ public class SlackNotificationService implements NotificationService {
         }
     }
 
-    private String getSlackUserId(String email) {
+    private static SlackClient getSlackClient(String token) {
+        SlackClientRuntimeConfig runtimeConfig = SlackClientRuntimeConfig.builder()
+                .setTokenSupplier(() -> token)
+                .build();
+
+        return SlackClientFactory.defaultFactory().build(runtimeConfig);
+    }
+
+    private String getSlackUserId(String email, SlackClient slackClient) {
         try {
             return slackClient
                     .lookupUserByEmail(UserEmailParams.builder()

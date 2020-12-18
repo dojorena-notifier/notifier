@@ -19,7 +19,7 @@ import java.util.Map;
 @Service
 public class GamesService {
 
-    @Value("${gamesApi}")
+    @Value("${games-api}")
     private String gamesApi;
 
     private final RestTemplate restTemplate;
@@ -44,6 +44,10 @@ public class GamesService {
             games.forEach(game -> gameRepo.put(game.getId(), game));
         }
         return gameRepo.values();
+    }
+
+    public void invalidateGamesCache() {
+        gameRepo = null;
     }
 
     public Game getGameById(String id) {

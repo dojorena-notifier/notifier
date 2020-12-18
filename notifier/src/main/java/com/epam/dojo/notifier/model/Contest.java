@@ -17,5 +17,7 @@ public class Contest {
         notifiers = new HashMap<>();
         notifiers.put(EventType.ANY_LEADERBOARD_CHANGE,
                 new HashSet<>(Arrays.asList(NotifierType.SLACK)));
+        notifiers.put(EventType.PARTICIPANT_SCORE_CHANGE,
+                new HashSet<>(Arrays.asList(NotifierType.SLACK)));
     }
 }

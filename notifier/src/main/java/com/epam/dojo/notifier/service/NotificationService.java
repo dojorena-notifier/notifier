@@ -1,15 +1,13 @@
 package com.epam.dojo.notifier.service;
 
-import com.epam.dojo.notifier.model.Notification;
-import com.epam.dojo.notifier.model.NotifierType;
+import com.epam.dojo.notifier.model.*;
 
 public interface NotificationService {
 
     NotifierType getNotificationServiceTypeMapping();
 
     //Private message
-    void notify(String email, Notification notification);
-
+    void notify(UserDetails userDetails, Notification notification, Contest contest);
     //Message in channel
-    void notify(Notification notification, String slackChannel);
+    void notify(Notification notification, Contest contest);
 }
