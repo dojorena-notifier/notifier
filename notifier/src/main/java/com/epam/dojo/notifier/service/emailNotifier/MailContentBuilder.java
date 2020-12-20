@@ -5,8 +5,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
 
+import java.util.Map;
+
 @Service
-public abstract class MailContentBuilder<T extends Notification> {
+public abstract class MailContentBuilder {
 
     private final TemplateEngine templateEngine;
 
@@ -15,7 +17,7 @@ public abstract class MailContentBuilder<T extends Notification> {
         this.templateEngine = templateEngine;
     }
 
-    public abstract String generateMailContent(T content);
+    public abstract String generateMailContent(Map<String,Object> contextParams);
 
     public TemplateEngine getTemplateEngine() {
         return templateEngine;

@@ -27,7 +27,7 @@ public class EmailNotificationService implements NotificationService {
     private JavaMailSender emailSender;
 
     @Autowired
-    private MailContentBuilder<Notification> mailContentBuilder;
+    private MailContentBuilder mailContentBuilder;
 
     private void sendEmail(String to, String data, Contest contest) {
         MimeMessage message = emailSender.createMimeMessage();
@@ -55,7 +55,7 @@ public class EmailNotificationService implements NotificationService {
     // Notify user
     @Override
     public void notify(UserDetails userDetails, Notification notification, Contest contest) {
-        String data = mailContentBuilder.generateMailContent(notification);
+        String data = notification.convertToEmailNotification(this.mailContentBuilder);
         sendEmail(userDetails.getEmail(), data, contest);
     }
 

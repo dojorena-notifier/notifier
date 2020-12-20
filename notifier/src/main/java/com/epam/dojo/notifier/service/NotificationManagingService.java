@@ -31,14 +31,6 @@ public class NotificationManagingService {
         this.executorService = Executors.newScheduledThreadPool(poolSize);
     }
 
-    @PostConstruct
-    private void test(){
-        Contest contest = new Contest();
-        contest.setContestId("152");
-        contest.setTitle("Contest 152");
-        startNotifications(contest);
-    }
-
     public void startNotifications(final Contest contest){
         ScheduledFuture<?> future = executorService.scheduleAtFixedRate(() ->leaderboardService.getLeaderBoard(contest), INITIAL_DELAY, schedulePeriod, TimeUnit.SECONDS);
         subscriptions.put(contest.getContestId(), future);
