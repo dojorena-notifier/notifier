@@ -1,8 +1,8 @@
 package com.epam.dojo.notifier.web;
 
 import com.epam.dojo.notifier.api.ContestController;
-import com.epam.dojo.notifier.model.Contest;
-import com.epam.dojo.notifier.model.Game;
+import com.epam.dojo.notifier.contest.Contest;
+import com.epam.dojo.notifier.contest.Game;
 import com.epam.dojo.notifier.service.GamesService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;

@@ -1,6 +1,6 @@
 package com.epam.dojo.notifier.api;
 
-import com.epam.dojo.notifier.model.Contest;
+import com.epam.dojo.notifier.contest.Contest;
 import com.epam.dojo.notifier.service.GamesService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;

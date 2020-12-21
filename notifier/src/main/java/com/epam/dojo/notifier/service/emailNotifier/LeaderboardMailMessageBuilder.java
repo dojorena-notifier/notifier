@@ -1,6 +1,5 @@
 package com.epam.dojo.notifier.service.emailNotifier;
 
-import com.epam.dojo.notifier.model.leaderboard.LeaderboardNotification;
 import org.springframework.stereotype.Component;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;

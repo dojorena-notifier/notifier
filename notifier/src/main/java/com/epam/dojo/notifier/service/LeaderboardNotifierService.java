@@ -1,9 +1,11 @@
 package com.epam.dojo.notifier.service;
 
 import com.epam.dojo.notifier.configuration.Configuration;
-import com.epam.dojo.notifier.model.*;
-import com.epam.dojo.notifier.model.leaderboard.FullLeaderboardNotification;
-import com.epam.dojo.notifier.model.leaderboard.PersonalLeaderboardNotification;
+import com.epam.dojo.notifier.contest.Contest;
+import com.epam.dojo.notifier.contest.EventType;
+import com.epam.dojo.notifier.contest.NotifierType;
+import com.epam.dojo.notifier.model.notification.FullLeaderboardNotification;
+import com.epam.dojo.notifier.model.notification.PersonalLeaderboardNotification;
 import com.epam.dojo.notifier.model.user.User;
 import com.epam.dojo.notifier.model.user.UserDetails;
 import org.slf4j.Logger;

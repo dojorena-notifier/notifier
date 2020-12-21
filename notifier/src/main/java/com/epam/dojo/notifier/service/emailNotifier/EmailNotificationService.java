@@ -1,9 +1,9 @@
 package com.epam.dojo.notifier.service.emailNotifier;
 
 import com.epam.dojo.notifier.configuration.EmailConfig;
-import com.epam.dojo.notifier.model.Contest;
-import com.epam.dojo.notifier.model.Notification;
-import com.epam.dojo.notifier.model.NotifierType;
+import com.epam.dojo.notifier.contest.Contest;
+import com.epam.dojo.notifier.model.notification.Notification;
+import com.epam.dojo.notifier.contest.NotifierType;
 import com.epam.dojo.notifier.model.user.UserDetails;
 import com.epam.dojo.notifier.service.NotificationService;
 import org.slf4j.Logger;

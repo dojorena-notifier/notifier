@@ -1,6 +1,7 @@
-package com.epam.dojo.notifier.model.leaderboard;
+package com.epam.dojo.notifier.model.notification;
 
 import com.epam.dojo.notifier.model.user.User;
+import com.epam.dojo.notifier.model.user.UserDetails;
 import com.epam.dojo.notifier.service.UserDetailsService;
 import com.epam.dojo.notifier.service.emailNotifier.MailContentBuilder;
 import com.hubspot.slack.client.SlackClient;
@@ -12,26 +13,29 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
 
-import static com.epam.dojo.notifier.model.SlackNotificationUtils.makeBold;
+import static com.epam.dojo.notifier.model.notification.SlackNotificationUtils.makeBold;
 
-public class FullLeaderboardNotification extends LeaderboardNotification {
+public class PersonalLeaderboardNotification extends LeaderboardNotification {
 
-    private final List<User> leaderboard;
+    private final UserDetails userDetails;
 
-    public FullLeaderboardNotification(List<User> leaderboard, UserDetailsService userDetailsService) {
-        super(leaderboard, userDetailsService, "Leaderboard update");
-        this.leaderboard = leaderboard;
+    public PersonalLeaderboardNotification(List<User> leaderboard, UserDetailsService userDetailsService, UserDetails userDetails) {
+        super(leaderboard, userDetailsService, "Your position in leaderboard has changed");
+        this.userDetails = userDetails;
     }
 
     @Override
     public final Text buildLeaderboardNames(BiFunction<String, SlackClient, String> getSlackUserId, SlackClient slackClient) {
         StringBuilder names = new StringBuilder();
-        leaderboard.forEach(user -> {
+
+        getLeaderboard().forEach(user -> {
             String userId = getSlackUserId.apply(getUserDetailsService().getUserEmail(user.getUser().getId()), slackClient);
             String nameWithLink = "<slack://user?team=null&id=" + userId + "|" + user.getUser().getName() + ">";
+            String name = (user.getUser().getId() == userDetails.getId()) ?
+                    makeBold(user.getUser().getName()) : userId.isEmpty() ? user.getUser().getName() : nameWithLink;
             names.append(makeBold(getPositionAndIncrease()))
                     .append(". ")
-                    .append(userId.isEmpty() ? user.getUser().getName() : nameWithLink)
+                    .append(name)
                     .append("\n");
         });
         return Text.of(TextType.MARKDOWN, String.valueOf(names));
@@ -41,14 +45,19 @@ public class FullLeaderboardNotification extends LeaderboardNotification {
     public Text buildLeaderboardScores() {
         StringBuilder scores = new StringBuilder();
 
-        leaderboard.forEach(user -> scores.append(user.getScore()).append("\n"));
+        getLeaderboard().forEach(user -> {
+            String score = (user.getUser().getId() == userDetails.getId()) ? makeBold(user.getScore())
+                    : String.valueOf(user.getScore());
+            scores.append(score).append("\n");
+        });
         return Text.of(TextType.MARKDOWN, String.valueOf(scores));
     }
 
     @Override
     public String convertToEmailNotification(MailContentBuilder mailContentBuilder) {
         Map<String, Object> contextParams = new HashMap<>();
-        contextParams.put("leaderboard", leaderboard);
+        contextParams.put("leaderboard", getLeaderboard());
+        contextParams.put("userDetails", userDetails);
         return mailContentBuilder.generateMailContent(contextParams);
     }
 }

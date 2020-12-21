@@ -1,8 +1,8 @@
 package com.epam.dojo.notifier.service;
 
-import com.epam.dojo.notifier.model.Contest;
-import com.epam.dojo.notifier.model.Game;
-import com.epam.dojo.notifier.model.GamesList;
+import com.epam.dojo.notifier.contest.Contest;
+import com.epam.dojo.notifier.contest.Game;
+import com.epam.dojo.notifier.contest.GamesList;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;

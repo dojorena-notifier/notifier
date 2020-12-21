@@ -1,4 +1,4 @@
-package com.epam.dojo.notifier.model;
+package com.epam.dojo.notifier.model.notification;
 
 public class SlackNotificationUtils {
 
