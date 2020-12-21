@@ -1,4 +1,4 @@
-package com.epam.dojo.notifier.model;
+package com.epam.dojo.notifier.contest;
 
 public enum EventType {
     ANY_LEADERBOARD_CHANGE,

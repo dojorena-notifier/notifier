@@ -1,12 +1,15 @@
 package com.epam.dojo.notifier.model.notification;
 
-import com.epam.dojo.notifier.model.User;
+import com.epam.dojo.notifier.model.user.User;
 import com.epam.dojo.notifier.service.UserDetailsService;
+import com.epam.dojo.notifier.service.emailNotifier.MailContentBuilder;
 import com.hubspot.slack.client.SlackClient;
 import com.hubspot.slack.client.models.blocks.objects.Text;
 import com.hubspot.slack.client.models.blocks.objects.TextType;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.BiFunction;
 
 import static com.epam.dojo.notifier.model.notification.SlackNotificationUtils.makeBold;
@@ -40,5 +43,12 @@ public class FullLeaderboardNotification extends LeaderboardNotification {
 
         leaderboard.forEach(user -> scores.append(user.getScore()).append("\n"));
         return Text.of(TextType.MARKDOWN, String.valueOf(scores));
+    }
+
+    @Override
+    public String convertToEmailNotification(MailContentBuilder mailContentBuilder) {
+        Map<String, Object> contextParams = new HashMap<>();
+        contextParams.put("leaderboard", leaderboard);
+        return mailContentBuilder.generateMailContent(contextParams);
     }
 }
