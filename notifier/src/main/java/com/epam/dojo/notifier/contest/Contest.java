@@ -1,5 +1,7 @@
 package com.epam.dojo.notifier.contest;
 
+import com.epam.dojo.notifier.contest.enums.CommonNotificationsLevel;
+import com.epam.dojo.notifier.contest.enums.NotifierType;
 import lombok.Data;
 
 import java.util.*;
@@ -11,67 +13,64 @@ public class Contest {
     private String title;
     private String slackToken;
     private String slackChannel;
-    private String senseiEmails;
+    private List<String> senseiEmails;
 
-    private Map<EventType, Set<NotifierType>> notifiers;
+    private Map<NotifierType, CommonNotificationsLevel> commonNotificationsLevel;
+    private Set<NotifierType> personalNotifiers;
 
     public Contest() {
-        notifiers = new HashMap<>();
-        notifiers.put(EventType.ANY_LEADERBOARD_CHANGE,
-                new HashSet<>(Arrays.asList(NotifierType.SLACK)));
-        notifiers.put(EventType.PARTICIPANT_SCORE_CHANGE,
-                new HashSet<>(Arrays.asList(NotifierType.SLACK)));
+        senseiEmails = new LinkedList<>();
+        commonNotificationsLevel = new HashMap<>();
+        commonNotificationsLevel.put(NotifierType.SLACK, CommonNotificationsLevel.NO_NOTIFICATIONS);
+        commonNotificationsLevel.put(NotifierType.EMAIL, CommonNotificationsLevel.NO_NOTIFICATIONS);
+        personalNotifiers = new HashSet<>();
     }
 
-    public boolean getCommonSlack() {
-        if (notifiers.containsKey(EventType.ANY_LEADERBOARD_CHANGE)) {
-            return notifiers.get(EventType.ANY_LEADERBOARD_CHANGE).contains(NotifierType.SLACK);
+    public void setSenseiEmailsAsString(String emails) {
+        senseiEmails = Arrays.asList(emails.split(";"));
+    }
+
+    public String getSenseiEmailsAsString() {
+        return "";
+    }
+
+    public void setSlackCommonNotifications(CommonNotificationsLevel level) {
+        commonNotificationsLevel.put(NotifierType.SLACK, level);
+    }
+
+    public CommonNotificationsLevel getSlackCommonNotifications() {
+        return commonNotificationsLevel.get(NotifierType.SLACK);
+    }
+
+    public void setEmailCommonNotifications(CommonNotificationsLevel level) {
+        commonNotificationsLevel.put(NotifierType.EMAIL, level);
+    }
+
+    public CommonNotificationsLevel getEmailCommonNotifications() {
+        return commonNotificationsLevel.get(NotifierType.EMAIL);
+    }
+
+    public void setPersonalPositionChangeSlack(boolean personalPositionChangeSlack) {
+        if (personalPositionChangeSlack) {
+            personalNotifiers.add(NotifierType.SLACK);
+        } else {
+            personalNotifiers.remove(NotifierType.SLACK);
         }
-        return false;
     }
 
-    public void setCommonSlack(boolean commonSlack) {
-        Set<NotifierType> nt = notifiers.getOrDefault(EventType.ANY_LEADERBOARD_CHANGE, new HashSet<>());
-        if (commonSlack) nt.add(NotifierType.SLACK);
-        else nt.remove(NotifierType.SLACK);
+    public boolean getPersonalPositionChangeSlack() {
+        return personalNotifiers.contains(NotifierType.SLACK);
     }
 
-    public boolean getCommonMail() {
-        if (notifiers.containsKey(EventType.ANY_LEADERBOARD_CHANGE)) {
-            return notifiers.get(EventType.ANY_LEADERBOARD_CHANGE).contains(NotifierType.EMAIL);
+    public void setPersonalPositionChangeEmail(boolean personalPositionChangeEmail) {
+        if (personalPositionChangeEmail) {
+            personalNotifiers.add(NotifierType.EMAIL);
+        } else {
+            personalNotifiers.remove(NotifierType.EMAIL);
         }
-        return false;
     }
 
-    public void setCommonMail(boolean commonMail) {
-        Set<NotifierType> nt = notifiers.getOrDefault(EventType.ANY_LEADERBOARD_CHANGE, new HashSet<>());
-        if (commonMail) nt.add(NotifierType.EMAIL);
-        else nt.remove(NotifierType.EMAIL);
-    }
-
-    public boolean getPersonalSlack() {
-        if (notifiers.containsKey(EventType.PARTICIPANT_SCORE_CHANGE)) {
-            return notifiers.get(EventType.PARTICIPANT_SCORE_CHANGE).contains(NotifierType.SLACK);
-        }
-        return false;
-    }
-
-    public void setPersonalSlack(boolean personalSlack) {
-        Set<NotifierType> nt = notifiers.getOrDefault(EventType.PARTICIPANT_SCORE_CHANGE, new HashSet<>());
-        if (personalSlack) nt.add(NotifierType.SLACK);
-        else nt.remove(NotifierType.SLACK);
-    }
-
-    public boolean getPersonalMail() {
-        if (notifiers.containsKey(EventType.PARTICIPANT_SCORE_CHANGE)) {
-            return notifiers.get(EventType.PARTICIPANT_SCORE_CHANGE).contains(NotifierType.EMAIL);
-        }
-        return false;
-    }
-
-    public void setPersonalMail(boolean personalMail) {
-        Set<NotifierType> nt = notifiers.getOrDefault(EventType.PARTICIPANT_SCORE_CHANGE, new HashSet<>());
-        if (personalMail) nt.add(NotifierType.EMAIL);
-        else nt.remove(NotifierType.EMAIL);
+    public boolean getPersonalPositionChangeEmail() {
+        return personalNotifiers.contains(NotifierType.EMAIL);
     }
 }
