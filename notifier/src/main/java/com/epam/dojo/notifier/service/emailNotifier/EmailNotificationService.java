@@ -3,7 +3,7 @@ package com.epam.dojo.notifier.service.emailNotifier;
 import com.epam.dojo.notifier.configuration.EmailConfig;
 import com.epam.dojo.notifier.contest.Contest;
 import com.epam.dojo.notifier.model.notification.Notification;
-import com.epam.dojo.notifier.contest.NotifierType;
+import com.epam.dojo.notifier.contest.enums.NotifierType;
 import com.epam.dojo.notifier.model.user.UserDetails;
 import com.epam.dojo.notifier.service.NotificationService;
 import org.slf4j.Logger;
@@ -62,7 +62,7 @@ public class EmailNotificationService implements NotificationService {
     // Notify channel
     @Override
     public void notify(Notification notification, Contest contest) {
-
+        String data = notification.convertToEmailNotification(this.mailContentBuilder);
+        contest.getSenseiEmails().forEach(email -> sendEmail(email, data, contest));
     }
 }
-

@@ -14,11 +14,11 @@ import java.util.function.BiFunction;
 
 import static com.epam.dojo.notifier.model.notification.SlackNotificationUtils.makeBold;
 
-public class FullLeaderboardNotification extends LeaderboardNotification {
+public class CommonLeaderboardNotification extends LeaderboardNotification {
 
     private final List<User> leaderboard;
 
-    public FullLeaderboardNotification(List<User> leaderboard, UserDetailsService userDetailsService) {
+    public CommonLeaderboardNotification(List<User> leaderboard, UserDetailsService userDetailsService) {
         super(leaderboard, userDetailsService, "Leaderboard update");
         this.leaderboard = leaderboard;
     }

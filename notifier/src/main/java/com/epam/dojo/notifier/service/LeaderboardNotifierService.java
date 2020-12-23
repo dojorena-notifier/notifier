@@ -2,9 +2,9 @@ package com.epam.dojo.notifier.service;
 
 import com.epam.dojo.notifier.configuration.Configuration;
 import com.epam.dojo.notifier.contest.Contest;
-import com.epam.dojo.notifier.contest.EventType;
-import com.epam.dojo.notifier.contest.NotifierType;
-import com.epam.dojo.notifier.model.notification.FullLeaderboardNotification;
+import com.epam.dojo.notifier.contest.enums.EventType;
+import com.epam.dojo.notifier.contest.enums.NotifierType;
+import com.epam.dojo.notifier.model.notification.CommonLeaderboardNotification;
 import com.epam.dojo.notifier.model.notification.PersonalLeaderboardNotification;
 import com.epam.dojo.notifier.model.user.User;
 import com.epam.dojo.notifier.model.user.UserDetails;
@@ -18,9 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -46,7 +44,6 @@ public class LeaderboardNotifierService {
         this.notificationServices = notificationServices.stream()
                 .collect(Collectors.toMap(NotificationService::getNotificationServiceTypeMapping, Function.identity()));
         this.userDetailsService = userDetailsService;
-
     }
 
     public void getLeaderBoard(final Contest contest) {
@@ -57,40 +54,54 @@ public class LeaderboardNotifierService {
                 HttpMethod.GET, null, new ParameterizedTypeReference<List<User>>() {
                 });
 
-        List<User> response = responseEntity.getBody();
+        List<User> newLeaderboard = responseEntity.getBody();
+        List<User> oldLeaderboard = leaderboards.get(contest.getContestId());
 
-        if (response != null && !response.equals(leaderboards.get(contest.getContestId())) ) {
+        if (oldLeaderboard != null && newLeaderboard != null && !newLeaderboard.equals(leaderboards.get(contest.getContestId())) ) {
             LOGGER.info("There are changes in leaderboard!");
 
-            if (leaderboards.size() > 0) {
-                notifyUsersForChangedPosition(response, contest);
+            EventType changesEventType = determineEventType(newLeaderboard, contest);
+            if (changesEventType == EventType.POSITION_CHANGES) {
+                notifyPersonal(newLeaderboard, contest);
             }
-
-            // TODO: determine the type of the change - is it just a participant score change
-            //  or the participant changed the position in the leaderboard
-            EventType currentEventType = EventType.ANY_LEADERBOARD_CHANGE;
-            for (NotifierType notifierType : contest.getNotifiers().get(currentEventType)) {
-                notificationServices.get(notifierType).notify(new FullLeaderboardNotification(response, userDetailsService), contest);
-            }
-
-            leaderboards.put(contest.getContestId(), response);
+            contest.getCommonNotificationsLevel().entrySet().stream()
+                    .filter(entry -> entry.getValue().getIncludedEventTypes().contains(changesEventType))
+                    .forEach(entry -> notifyCommon(newLeaderboard, contest, entry.getKey()));
         }
+        leaderboards.put(contest.getContestId(), newLeaderboard);
     }
 
-    private void notifyUsersForChangedPosition(List<User> newLeaderboard, Contest contest) {
+    private void notifyPersonal(List<User> newLeaderboard, Contest contest) {
         List<User> leaderboard = leaderboards.get(contest.getContestId());
-        int size = Math.min(newLeaderboard.size(), leaderboard.size());
 
-        List<UserDetails> userDetails = IntStream.range(0, size)
+        List<UserDetails> userDetails = IntStream.range(0, Math.min(newLeaderboard.size(), leaderboard.size()))
                 .filter(i -> !leaderboard.get(i).equals(newLeaderboard.get(i)))
                 .mapToObj(i -> userDetailsService.getUserDetails(leaderboard.get(i).getUser().getId()))
                 .collect(Collectors.toList());
 
         userDetails.forEach(user -> {
-            for (NotifierType notifierType : contest.getNotifiers().get(EventType.PARTICIPANT_SCORE_CHANGE)) {
+            for (NotifierType notifierType : contest.getPersonalNotifiers()) {
                 notificationServices.get(notifierType)
                         .notify(user, new PersonalLeaderboardNotification(newLeaderboard, userDetailsService, user), contest);
             }
         });
+    }
+
+    private void notifyCommon(List<User> newLeaderboard, Contest contest, NotifierType notifierType) {
+        notificationServices.get(notifierType).notify(new CommonLeaderboardNotification(newLeaderboard, userDetailsService), contest);
+    }
+
+    private EventType determineEventType(List<User> newLeaderboard, Contest contest) {
+        List<User> oldLeaderboard = leaderboards.get(contest.getContestId());
+
+        if (IntStream.range(0, Math.min(newLeaderboard.size(), oldLeaderboard.size()))
+                .filter(i -> oldLeaderboard.get(i).getUser().getId() != (newLeaderboard.get(i).getUser().getId()))
+                .findAny().isPresent()) return EventType.POSITION_CHANGES;
+
+        if (IntStream.range(0, Math.min(newLeaderboard.size(), oldLeaderboard.size()))
+                .filter(i -> oldLeaderboard.get(i).getScore() != (newLeaderboard.get(i).getScore()))
+                .findAny().isPresent()) return EventType.SCORE_CHANGES;
+
+        return EventType.OTHER_LEADERBOARD_CHANGE;
     }
 }

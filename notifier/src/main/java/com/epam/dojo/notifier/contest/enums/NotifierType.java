@@ -1,4 +1,4 @@
-package com.epam.dojo.notifier.contest;
+package com.epam.dojo.notifier.contest.enums;
 
 public enum NotifierType {
     EMAIL,
